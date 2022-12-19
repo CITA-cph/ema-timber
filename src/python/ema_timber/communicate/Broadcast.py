@@ -1,6 +1,7 @@
 # BROADCASTING CHANNEL
 import socket
 import time
+
 class Broadcast():
     def __init__(self, HOST= "127.0.0.1", PORT= 55555, MESSAGE=b"WOOD IS COOL"):
         

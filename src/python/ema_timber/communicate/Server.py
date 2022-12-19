@@ -24,12 +24,12 @@ class Server():
         try:
             s.bind((self.IP, self.PORT))
             time.sleep(0.05)
-            print(f"socket {self.id} binded to port:{self.IP} {self.PORT}")
+            print(f"[- {self.id} -] binded to port:{self.IP} {self.PORT}")
             s.listen()
-            print(f"socket {self.id} is listening" )
+            print(f"[- {self.id} -] is listening" )
             return s
         except:
-            print (f"socket {self.id} could not bind to port:{self.IP} {self.PORT}")
+            print (f"[- {self.id} -] could not bind to port:{self.IP} {self.PORT}")
             return False
 
     def recvdata(self, c):
@@ -45,7 +45,7 @@ class Server():
         while True:
             try:
                 c, addr = self.sock.accept()
-                print(f'\nS {self.id} - Connected to :', addr)
+                print(f'\n[- {self.id} -] - Connected to :', addr)
                 data = self.recvdata(c) # GETTING DATA
                 
                 if data:

@@ -1,14 +1,16 @@
 import sys
 import os
+import threading
+import socket
 
 dir1 = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(dir1))
 
-import communicate
-from communicate import *
-from communicate.Broadcast import tunein
-import threading
-import socket
+from ema_timber.communicate import Client
+from ema_timber.communicate import Server
+from ema_timber.communicate import c_sProt
+from ema_timber.communicate.Broadcast import tunein
+
 
 
 def main():
