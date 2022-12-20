@@ -5,7 +5,8 @@ import numpy as np
 from . import Processor
 import os
 
-output_dir = os.path.abspath("../ema-timber/examples/img_array")
+date = "221220"
+output_dir = os.path.abspath(f"../ema-timber/examples/{date}/np_array")
 
 class Server():
 
