@@ -31,28 +31,33 @@ def OUTPUT(args):
 def takeImg(args):
 
     try:
-        from picamera2 import Picamera2, Preview
+        from picamera2 import Picamera2
 
         print("<takeImg> START")
 
         return_addr = args[0]
         R_HOST, R_PORT = get_address(return_addr)
-        A_ID = get_address()
         
         picam2 = Picamera2()
-        picam2.start_preview(Preview.QTGL)
-
-        preview_config = picam2.create_preview_comfiguration(raw = {"size": picam2.sensor_resolution})
-        picam2.configure(preview_config)
+        config = picam2.create_still_comfiguration(main = {"size": picam2.sensor_resolution})
+        picam2.configure(config)
 
         picam2.start()
+        time.sleep(2)
+        picam2.stop()
 
         # TAKE IMAGE CODE HERE#
         for i in range(10):
-            time.sleep(0.5)
-            raw = picam2.capture_array("raw")
+            picam2.start()
+            time.sleep(1)
+            raw = picam2.capture_array("main")
             raw_np = np.array(raw).tobytes()
+            print (len(raw_np))
+            print (raw.shape)
             Client.sendByteStream(R_HOST, R_PORT, raw_np)
+            picam2.stop()
+
+        picam2.close()
 
         message = Package.pack("OUTPUT", [ "<takeImg> DONE"])
         Client.clientOut(R_HOST, R_PORT,message)

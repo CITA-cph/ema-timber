@@ -1,8 +1,6 @@
 import sys
 import os
-
-dir1 = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(dir1))
+import init_examples
 
 from ema_timber.communicate import Broadcast
 from ema_timber.communicate import Server

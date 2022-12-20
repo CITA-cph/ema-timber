@@ -4,7 +4,8 @@ import time
 import numpy as np
 from . import Processor
 import os
-output_dir = "./process/img_array"
+output_dir = os.path.abspath("../ema-timber/examples/img_array")
+
 class Server():
 
     def __init__(self, HOST, PORT, id, prgls):
@@ -94,6 +95,6 @@ class Server():
         c.recv(1024) # CLOSING .reshape(1944,2592,3)
         y = np.frombuffer(data, dtype=np.uint8)
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        np.save( os.path.join(output_dir, timestr+".npy"),y)
+        np.save (output_dir + "\\" + timestr +".npy",y)
 
 
