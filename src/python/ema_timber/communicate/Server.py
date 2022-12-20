@@ -3,7 +3,8 @@ import socket
 import time
 import numpy as np
 from . import Processor
-import cv2 
+import os
+output_dir = "./process/img_array"
 class Server():
 
     def __init__(self, HOST, PORT, id, prgls):
@@ -76,7 +77,7 @@ class Server():
         print (self.processor.pages.address)
 
     def recvBytestream(self,c):
-        
+
         size = int(self.recvdata(c).decode())
         print(f"waiting for {size} bytes")
 
@@ -90,11 +91,9 @@ class Server():
 
         print(f"received {len(data)} bytes")
         c.send(f"received {size} bytes".encode() )
-        c.recv(1024) # CLOSING
-        y = np.frombuffer(data, dtype=np.uint8).reshape(1944,3264)
-        print (y)
-        cv2.imshow("window", y)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        c.recv(1024) # CLOSING .reshape(1944,2592,3)
+        y = np.frombuffer(data, dtype=np.uint8)
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        np.save( os.path.join(output_dir, timestr+".npy"),y)
 
 
