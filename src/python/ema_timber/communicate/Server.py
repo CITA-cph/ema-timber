@@ -4,6 +4,7 @@ import time
 import numpy as np
 from . import Processor
 import os
+
 output_dir = os.path.abspath("../ema-timber/examples/img_array")
 
 class Server():

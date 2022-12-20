@@ -12,5 +12,3 @@ base_dir = os.path.dirname(this_dir)
 tmp_dir = os.path.join(base_dir, "tmp")
 
 sys.path.append(os.path.join(base_dir, "src", "python"))
-
-import ema_timber
