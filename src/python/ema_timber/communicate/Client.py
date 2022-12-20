@@ -43,3 +43,15 @@ def PING(S_HOST, S_PORT, ID, IP, PORT):
         return True
     else:
         return False
+
+def sendByteStream(TARGET_IP, TARGET_PORT,bytestream):
+    s = clientSetup(TARGET_IP,TARGET_PORT)
+    if s:
+        s.send(b"FILE")
+        s.recv(1024)
+        s.send(str(len(bytestream)).encode())
+        s.recv(1024)
+        s.send(bytestream)
+        s.recv(1024)
+        print("SEND OK")
+        s.close()

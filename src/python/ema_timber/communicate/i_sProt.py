@@ -48,16 +48,20 @@ def takeImg(args):
                 print (f"Could not connect to {id}")
                 message = Package.pack(TASK="OUTPUT", args=[f"Could not get a respond from {id}"])
                 Client.clientOut(R_HOST, R_PORT, message )
-                continue
+                print("\n<takeImg> FAILED\n")
+                return False,False
         else:
             print (f"Could not connect to {id}")
             message = Package.pack(TASK="OUTPUT", args=[f"{id} has not connected to Server"])
             Client.clientOut(R_HOST, R_PORT, message )
-            continue
+            print("\n<takeImg> FAILED\n")
+            return False,False
 
     for ad in camera_addrs:
         message = Package.pack(TASK="takeImg", args=["02", "NAMEOFPHOTO"])
         Client.clientOut(ad[0], ad[1], message)
+        message = Package.pack(TASK="OUTPUT", args=[f"Cameras - {camera_ls}, has started taking photos"])
+        Client.clientOut(R_HOST, R_PORT, message )
 
     print("\n<takeImg> DONE\n")
     return False,False

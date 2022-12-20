@@ -1,9 +1,9 @@
 # SERVER CHANNEL
 import socket
 import time
-
+import numpy as np
 from . import Processor
-
+import cv2 
 class Server():
 
     def __init__(self, HOST, PORT, id, prgls):
@@ -35,10 +35,10 @@ class Server():
     def recvdata(self, c):
         try:
             data = c.recv(1024)
-            c.send(b"recieved")
+            c.send(b"received")
             return data
         except:
-            print("Could not recieve data")
+            print("Could not receive data")
             return False
 
     def channel(self):
@@ -53,12 +53,17 @@ class Server():
                         self.updatePages(c)
                         print("Terminating :", addr)
                         continue
+                    elif data ==b"FILE":
+                        self.recvBytestream(c)
+                        print("Terminating :", addr)
+                        continue
                     c.recv(1024) # CLOSING
                     print("Terminating :", addr)
                     self.processor.postJob(data)
 
             except:
                 c.close()
+                raise
                 print("DATA ERROR")
 
     def updatePages(self, c):
@@ -69,3 +74,27 @@ class Server():
         c.recv(1024) # CLOSING
         self.processor.pages.set_address({p_ID:[p_IP, p_PORT]})
         print (self.processor.pages.address)
+
+    def recvBytestream(self,c):
+        
+        size = int(self.recvdata(c).decode())
+        print(f"waiting for {size} bytes")
+
+        # receive all bytes
+        data = bytearray()
+        while len(data) < size:
+            packet = c.recv(size - len(data))
+            if not packet:
+                return None
+            data.extend(packet)
+
+        print(f"received {len(data)} bytes")
+        c.send(f"received {size} bytes".encode() )
+        c.recv(1024) # CLOSING
+        y = np.frombuffer(data, dtype=np.uint8).reshape(1944,3264)
+        print (y)
+        cv2.imshow("window", y)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+

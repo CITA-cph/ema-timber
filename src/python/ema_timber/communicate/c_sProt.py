@@ -2,6 +2,7 @@ import json
 import time
 from . import Client
 from . import Package
+import numpy as np
 
 def get_address(target = ""):
 
@@ -26,26 +27,41 @@ def OUTPUT(args):
         print(a)
     return False,False
 
-
+# ALL FUNC SHOULD BE IN A SEPERATE FILE
 def takeImg(args):
 
-    print("<takeImg> START")
+    try:
+        from picamera2 import Picamera2, Preview
 
-    return_addr = args[0]
-    R_HOST, R_PORT = get_address(return_addr)
-    A_ID = get_address()
-    # TAKE IMAGE CODE HERE#
-    for i in range(10):
-        print ("TAKING IMAGE ", i)
-        time.sleep(0.5)
-        message = Package.pack("OUTPUT", [ f"IMAGE{i}"])
+        print("<takeImg> START")
+
+        return_addr = args[0]
+        R_HOST, R_PORT = get_address(return_addr)
+        A_ID = get_address()
+        
+        picam2 = Picamera2()
+        picam2.start_preview(Preview.QTGL)
+
+        preview_config = picam2.create_preview_comfiguration(raw = {"size": picam2.sensor_resolution})
+        picam2.configure(preview_config)
+
+        picam2.start()
+
+        # TAKE IMAGE CODE HERE#
+        for i in range(10):
+            time.sleep(0.5)
+            raw = picam2.capture_array("raw")
+            raw_np = np.array(raw).tobytes()
+            Client.sendByteStream(R_HOST, R_PORT, raw_np)
+
+        message = Package.pack("OUTPUT", [ "<takeImg> DONE"])
         Client.clientOut(R_HOST, R_PORT,message)
+        print("<takeImg> DONE")
+    except:
+        print("<takeImg> FAILED")
 
-    message = Package.pack("OUTPUT", [ "<takeImg> DONE"])
-    Client.clientOut(R_HOST, R_PORT,message)
-    print("<takeImg> DONE")
     return False, False
-    
+
 
 
 

@@ -20,6 +20,7 @@ def main():
     ID = "04"
     HOSTNAME = socket.gethostname()
     IP = socket.gethostbyname(HOSTNAME)
+    # If you are using a PI use HOSTNAME + ".local"
     PORT = 55444 #RECIVING DATA AT
     
     BROADPORT = 55555 #BROADCASTING 
