@@ -28,7 +28,7 @@ def clientOut(TARGET_IP, TARGET_PORT,message):
         print(f"Could not send data")
         return False
 
-def PING(S_HOST, S_PORT, ID, IP, PORT):
+def PING(S_HOST, S_PORT, ID, IP, PORT, show = True):
     s = clientSetup(S_HOST,S_PORT)
     if s:
         s.send(b"PING")
@@ -39,7 +39,8 @@ def PING(S_HOST, S_PORT, ID, IP, PORT):
         s.recv(1024)
         s.send(str(PORT).encode())
         s.recv(1024)
-        print (f"PING OK")
+        if show:
+            print (f"PING OK")
         s.close()
         return True
     else:
