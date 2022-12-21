@@ -9,8 +9,6 @@ from ema_timber.communicate import Server
 from ema_timber.communicate import c_sProt
 from ema_timber.communicate.Broadcast import tunein
 
-
-
 def main():
 
 
@@ -36,8 +34,7 @@ def main():
     print ("SERVER addr : ", T_HOST, T_PORT)
 
     # GIVE RECV ADDR
-    Client.PING(T_HOST, T_PORT, ID, IP, PORT)
-
+    Client.alive(T_HOST, T_PORT, ID, IP, PORT)
     S = threading.Thread(
         target = Server,
         args = (IP, PORT, ID, c_s)

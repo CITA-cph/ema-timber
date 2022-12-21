@@ -1,6 +1,7 @@
 # CLIENT CHANNEL
 
 import socket
+import time 
 
 def clientSetup(HOST,PORT):
     
@@ -58,3 +59,9 @@ def sendByteStream(TARGET_IP, TARGET_PORT,bytestream, dst):
         s.recv(1024)
         print("SEND OK")
         s.close()
+
+def alive (S_HOST, S_PORT, ID, IP, PORT):
+
+    while True:
+        PING(S_HOST, S_PORT, ID, IP, PORT)
+        time.sleep(100)

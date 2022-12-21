@@ -30,7 +30,7 @@ def main():
     T_HOST, T_PORT = tunein(BROADPORT, 0)
     print ("SERVER addr : ", T_HOST, T_PORT)
     
-    Client.PING(T_HOST, T_PORT, ID, IP, PORT)
+    Client.alive(T_HOST, T_PORT, ID, IP, PORT)
 
     S = threading.Thread(
         target = Server,

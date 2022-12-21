@@ -34,7 +34,7 @@ def takeImg(args):
         folder = args[1][0]
     except:
         timestr = time.strftime(("%y%m%d_%H%M%S"))
-        folder = "00000"
+        folder = timestr
     answer_addr = "02"
     R_HOST, R_PORT = get_address(return_addr)
     A_HOST, A_PORT = get_address(answer_addr)

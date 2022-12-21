@@ -101,11 +101,11 @@ class Server():
         c.send(f"received {size} bytes".encode() )
         tmp = self.recvdata(c).decode() #parent/subname/
         dst = tmp.split("/")
-        print(dst)
         c.recv(1024) #CLOSING
         y = np.frombuffer(data, dtype=np.uint8)
         folder_dir = os.path.join(base_dir, dst[0],dst[1])
         makeDir(folder_dir)
+        print (f"save to {folder_dir}")
         output_dir = os.path.join(folder_dir, dst[1] + "_" + dst[2] + ".npy")
         np.save (output_dir,y)
 
