@@ -19,7 +19,7 @@ def alive(BROADPORT,TYPE, ID, IP, PORT):
             if delta != "a":
                 print ("SERVER addr : ", T_HOST, T_PORT)
                 # GIVE ADDR
-                Client.PING(T_HOST, T_PORT, ID, IP, PORT, False)
+            Client.PING(T_HOST, T_PORT, ID, IP, PORT, False)
             time.sleep(5)
             delta = "a"
         else:

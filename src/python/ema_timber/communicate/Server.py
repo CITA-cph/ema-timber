@@ -106,7 +106,8 @@ class Server():
         c.send(f"received {size} bytes".encode() )
         y = np.frombuffer(data, dtype=np.uint8)
 
-        dst = self.recvdata(c).decode().split("/") #parent/subname/
+        tmp = self.recvdata(c).decode()
+        dst  = tmp.split("/") #parent/subname/
         c.recv(1024) #CLOSING
 
         folder_dir = os.path.join(base_dir, dst[0],dst[1])

@@ -48,6 +48,7 @@ def PING(S_HOST, S_PORT, ID, IP, PORT, show = True):
 
 def sendByteStream(TARGET_IP, TARGET_PORT,bytestream, dst):
     s = clientSetup(TARGET_IP,TARGET_PORT)
+    s.settimeout(None)
     if s:
         s.send(b"FILE")
         s.recv(1024)
