@@ -4,6 +4,7 @@ import time
 import numpy as np
 from . import Processor
 import os
+import copy
 
 def makeDir(parentpath):
     if not os.path.exists(parentpath):
@@ -60,7 +61,7 @@ class Server():
                 if data:
                     if data == b"PING":
                         self.updatePages(c)
-                        print("Terminating :", addr)
+                        #print("Terminating :", addr)
                         continue
                     elif data ==b"FILE":
                         print(f'\n[- {self.id} -] - Connected to :', addr)
@@ -82,9 +83,10 @@ class Server():
         p_IP = self.recvdata(c).decode()
         p_PORT = int(self.recvdata(c).decode())
         c.recv(1024) # CLOSING
-        p0 = self.processor.pages.address
+        p0 = copy.copy(self.processor.pages.address)
         self.processor.pages.set_address({p_ID:[p_IP, p_PORT]})
         if p0 != self.processor.pages.address:
+
             print (self.processor.pages.address)
 
     def recvBytestream(self,c):
