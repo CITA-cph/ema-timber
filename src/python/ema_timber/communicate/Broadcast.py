@@ -34,10 +34,10 @@ def tunein(PORT, c):
         data, addr = client.recvfrom(1024)
         
         if c == 0:
-            print("Broadcast :", data.decode()[:5])
+            #print("Broadcast :", data.decode()[:5])
             return addr[0], int(data.decode()[:5])
         else:
-            print("Broadcast :", data.decode()[5:])
+            #print("Broadcast :", data.decode()[5:])
             return addr[0], int(data.decode()[5:])
     except:
         #print (f"Failed to reach broadcast at {PORT}")

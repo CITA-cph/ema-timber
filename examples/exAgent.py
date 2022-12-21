@@ -20,13 +20,13 @@ def alive(BROADPORT,TYPE, ID, IP, PORT):
                 print ("SERVER addr : ", T_HOST, T_PORT)
                 # GIVE ADDR
                 Client.PING(T_HOST, T_PORT, ID, IP, PORT)
-            time.sleep(50)
+            time.sleep(5)
             delta = "a"
         else:
         
             if delta !="b":
                 print ("No connection to server")
-            time.sleep(5)
+            time.sleep(2)
             delta = "b"
 
 def main():
