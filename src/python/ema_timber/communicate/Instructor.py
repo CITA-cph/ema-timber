@@ -25,7 +25,7 @@ class Instructor():
             if chosen_prot < len(self.prot):
                 extra_v = input('Args : \t')
                 if len(extra_v)> 0:
-                    extra_ls = extra_v.split(",")
+                    extra_ls = extra_v.split("/")
                     args.append(extra_ls)
                 
             else:

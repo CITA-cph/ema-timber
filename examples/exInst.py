@@ -10,17 +10,23 @@ from ema_timber.communicate import Client, Server, Instructor, i_sProt
 from ema_timber.communicate.Broadcast import tunein
 
 def alive(BROADPORT,TYPE, ID, IP, PORT):
+    delta  = "c"
     while True:
         # LISTEN TO BC
         T_HOST, T_PORT = tunein(BROADPORT, TYPE)
         if T_HOST and T_HOST:
-            print ("SERVER addr : ", T_HOST, T_PORT)
-            # GIVE ADDR
-            Client.PING(T_HOST, T_PORT, ID, IP, PORT)
+            if delta != "a":
+                print ("SERVER addr : ", T_HOST, T_PORT)
+                # GIVE ADDR
+                Client.PING(T_HOST, T_PORT, ID, IP, PORT)
             time.sleep(50)
+            delta = "a"
         else:
-            print ("Lost connection to server")
+        
+            if delta !="b":
+                print ("No connection to server")
             time.sleep(5)
+            delta = "b"
 
 def main():
 

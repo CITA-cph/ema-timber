@@ -40,7 +40,7 @@ def tunein(PORT, c):
             print("Broadcast :", data.decode()[5:])
             return addr[0], int(data.decode()[5:])
     except:
-        print (f"Failed to reach broadcast at {PORT}")
+        #print (f"Failed to reach broadcast at {PORT}")
         return False, False
 
 
