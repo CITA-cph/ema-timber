@@ -106,7 +106,7 @@ class Server():
         y = np.frombuffer(data, dtype=np.uint8)
         folder_dir = os.path.join(base_dir, dst[0],dst[1])
         makeDir(folder_dir)
-        output_dir = os.path.join(folder_dir, dst[2] + ".npy")
+        output_dir = os.path.join(folder_dir, dst[1] + "_" + dst[2] + ".npy")
         np.save (output_dir,y)
 
 

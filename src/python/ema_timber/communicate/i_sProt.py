@@ -1,7 +1,7 @@
 import json
 from . import Client
 from . import Package
-
+import time
 def get_address(target = ""):
 
     with open("yellowpages.json","r") as f:
@@ -30,7 +30,11 @@ def takeImg(args):
 
     print("\n<takeImg> START\n")
     return_addr = args[0]
-    folder = args[1]
+    try:
+        folder = args[1][0]
+    except:
+        timestr = time.strftime(("%y%m%d_%H%M%S"))
+        folder = "00000"
     answer_addr = "02"
     R_HOST, R_PORT = get_address(return_addr)
     A_HOST, A_PORT = get_address(answer_addr)
