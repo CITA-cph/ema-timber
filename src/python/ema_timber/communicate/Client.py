@@ -44,7 +44,7 @@ def PING(S_HOST, S_PORT, ID, IP, PORT):
     else:
         return False
 
-def sendByteStream(TARGET_IP, TARGET_PORT,bytestream):
+def sendByteStream(TARGET_IP, TARGET_PORT,bytestream, dst):
     s = clientSetup(TARGET_IP,TARGET_PORT)
     if s:
         s.send(b"FILE")
@@ -52,6 +52,9 @@ def sendByteStream(TARGET_IP, TARGET_PORT,bytestream):
         s.send(str(len(bytestream)).encode())
         s.recv(1024)
         s.send(bytestream)
+        message  = s.recv(1024)
+        print(message.decode())
+        s.send(dst.encode())
         s.recv(1024)
         print("SEND OK")
         s.close()

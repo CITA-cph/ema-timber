@@ -5,8 +5,13 @@ import numpy as np
 from . import Processor
 import os
 
-date = "221220"
-output_dir = os.path.abspath(f"../ema-timber/examples/{date}/np_array")
+def makeDir(parentpath):
+    if not os.path.exists(parentpath):
+        os.makedirs(parentpath)
+
+date =  time.strftime("%y%m%d")
+base_dir = os.path.abspath(f"../ema-timber/examples/{date}")
+makeDir(base_dir)
 
 class Server():
 
@@ -94,9 +99,14 @@ class Server():
 
         print(f"received {len(data)} bytes")
         c.send(f"received {size} bytes".encode() )
-        c.recv(1024) # CLOSING .reshape(1944,2592,3)
+        dst = self.recvdata().decode() #parent/subname/
+        c.recv(1024) #CLOSING
         y = np.frombuffer(data, dtype=np.uint8)
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        np.save (output_dir + "\\" + timestr +".npy",y)
+        timestr = time.strftime("%y%m%d_%T")
+        folder_dir = os.path.join(base_dir, dst)
+        makeDir(folder_dir)
+        # output_dir = base/parent/subname/date_time.npy
+        output_dir = os.path.join(folder_dir, timestr , ".npy")
+        np.save (output_dir,y)
 
 

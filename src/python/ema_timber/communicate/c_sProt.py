@@ -54,7 +54,7 @@ def takeImg(args):
             raw_np = np.array(raw).tobytes()
             print (len(raw_np))
             print (raw.shape)
-            Client.sendByteStream(R_HOST, R_PORT, raw_np)
+            Client.sendByteStream(R_HOST, R_PORT, raw_np, f"np_array_{i:03}")
             picam2.stop()
 
         picam2.close()

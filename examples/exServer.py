@@ -6,6 +6,7 @@ from ema_timber.communicate import Broadcast
 from ema_timber.communicate import Server
 from ema_timber.communicate import c_sProt
 from ema_timber.communicate import i_sProt
+from ema_timber.process.knotscrapper import knotscrap
 import socket
 import threading
 

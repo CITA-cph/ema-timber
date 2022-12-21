@@ -58,7 +58,7 @@ def takeImg(args):
             return False,False
 
     for ad in camera_addrs:
-        message = Package.pack(TASK="takeImg", args=["02", "NAMEOFPHOTO"])
+        message = Package.pack(TASK="takeImg", args=["02"])
         Client.clientOut(ad[0], ad[1], message)
         message = Package.pack(TASK="OUTPUT", args=[f"Cameras - {camera_ls}, has started taking photos"])
         Client.clientOut(R_HOST, R_PORT, message )
