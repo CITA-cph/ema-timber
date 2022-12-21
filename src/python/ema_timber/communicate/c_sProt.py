@@ -3,6 +3,7 @@ import time
 from . import Client
 from . import Package
 import numpy as np
+import os 
 
 def get_address(target = ""):
 
@@ -62,15 +63,28 @@ def takeImg(args):
 
         message = Package.pack("OUTPUT", [ "<takeImg> DONE"])
         Client.clientOut(R_HOST, R_PORT,message)
+        date =  time.strftime("%y%m%d")
+        message = Package.pack("stitchImg", [date])
+        Client.clientOut(R_HOST, R_PORT,message)
         print("<takeImg> DONE")
     except:
         print("<takeImg> FAILED")
 
     return False, False
 
+def stitchImg(args):
+
+    filename  = args[0]
+    from .. import process
+    from process.knotscrapper import knotscrap as ks
+    base_dir = os.path.abspath(f"../ema-timber/examples/{filename}")
+    ks.run(base_dir)
+
+    
 
 
 prgls = {
         "OUTPUT":OUTPUT,
         "takeImg":takeImg,
+        "stitchImg":stitchImg,
         }
