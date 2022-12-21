@@ -99,14 +99,14 @@ class Server():
 
         print(f"received {len(data)} bytes")
         c.send(f"received {size} bytes".encode() )
-        dst = self.recvdata().decode() #parent/subname/
+        tmp = self.recvdata(c).decode() #parent/subname/
+        dst = tmp.split("/")
+        print(dst)
         c.recv(1024) #CLOSING
         y = np.frombuffer(data, dtype=np.uint8)
-        timestr = time.strftime("%y%m%d_%T")
-        folder_dir = os.path.join(base_dir, dst)
+        folder_dir = os.path.join(base_dir, dst[0],dst[1])
         makeDir(folder_dir)
-        # output_dir = base/parent/subname/date_time.npy
-        output_dir = os.path.join(folder_dir, timestr , ".npy")
+        output_dir = os.path.join(folder_dir, dst[2] + ".npy")
         np.save (output_dir,y)
 
 

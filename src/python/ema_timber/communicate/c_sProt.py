@@ -36,10 +36,11 @@ def takeImg(args):
         print("<takeImg> START")
 
         return_addr = args[0]
+        filename  = args[1]
         R_HOST, R_PORT = get_address(return_addr)
         
         picam2 = Picamera2()
-        config = picam2.create_still_comfiguration(main = {"size": picam2.sensor_resolution})
+        config = picam2.create_still_configuration(main = {"size": picam2.sensor_resolution})
         picam2.configure(config)
 
         picam2.start()
@@ -54,7 +55,7 @@ def takeImg(args):
             raw_np = np.array(raw).tobytes()
             print (len(raw_np))
             print (raw.shape)
-            Client.sendByteStream(R_HOST, R_PORT, raw_np, f"np_array_{i:03}")
+            Client.sendByteStream(R_HOST, R_PORT, raw_np, f"np_array/{filename}/{i:03}")
             picam2.stop()
 
         picam2.close()
