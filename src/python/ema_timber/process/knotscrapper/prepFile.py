@@ -18,15 +18,17 @@ def getPaths(parentpath):
     return path_ls
 
 def makeDir(i, parentpath):
-        dir = os.path.join(parentpath, "{}".format(i) , "")
+        dir = os.path.join(parentpath, "{}".format(i))
         if not os.path.exists(dir):
             os.makedirs(dir)
         return dir
 
 def getImgs(parentpath):
     img_ls = []
-    path_ls = glob.glob(parentpath)
+    dir = os.path.join(parentpath, "*.png")
+    path_ls = glob.glob(dir)
     for i in path_ls:
+        print (i)
         img = cv2.imread(i)
         img_ls.append(img)
     return img_ls

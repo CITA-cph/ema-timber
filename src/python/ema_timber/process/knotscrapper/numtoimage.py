@@ -1,9 +1,10 @@
 import numpy as np
 import cv2
 import glob
-
+import os
 def makeImgs(dir):
     img_ls = []
+    dir = os.path.join(dir, "*.npy")
     path_ls = glob.glob(dir)
     for i in path_ls:
         data = np.load(i)

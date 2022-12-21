@@ -36,7 +36,7 @@ np_array_paths = prepFile.getPaths(os.path.join(base_dir, date ,np_array))
 for i in range(len(np_array_paths)):
         id = prepFile.naming(i)
         imgs = ni.makeImgs(np_array_paths[i])
-        prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= "", id = id )
+        prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= id , id = id )
 
 
 
@@ -45,6 +45,7 @@ raw_img_paths = prepFile.getPaths(os.path.join(base_dir, date ,raw_img)) # Paths
 for i in range(len(raw_img_paths)): # Create class object board
     id = prepFile.naming(i)
     imgs = prepFile.getImgs(raw_img_paths[i])
+
     a = Board.Board(id, imgs, "RAW")
     print ("{} - created".format(id))
     Board_ls.append(a)
@@ -60,6 +61,7 @@ for b in Board_ls: # Fix and Stitch IMG
     except:
 
         print("{}.png could not be created".format(b.id))
+        raise()
     
     # Prepare image
     b.contrastImg(2.2, (45,15))
