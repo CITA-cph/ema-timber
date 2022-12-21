@@ -6,7 +6,6 @@ from . import Package
 class Instructor():
 
     def __init__(self,T_HOST, T_PORT, id = 99, i_s = {}):
-        print ("HERE")
         self.id = id
         self.prot = list(i_s.keys())
         self.HOST = T_HOST

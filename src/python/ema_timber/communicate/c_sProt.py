@@ -70,7 +70,6 @@ def takeImg(args):
 
 
 
-
 prgls = {
         "OUTPUT":OUTPUT,
         "takeImg":takeImg,

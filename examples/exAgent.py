@@ -34,7 +34,13 @@ def main():
     print ("SERVER addr : ", T_HOST, T_PORT)
 
     # GIVE RECV ADDR
-    Client.alive(T_HOST, T_PORT, ID, IP, PORT)
+    ALIVE = threading.Thread(
+        target = Client.alive,
+        args = (T_HOST, T_PORT, ID, IP, PORT)
+    )
+    ALIVE.start()
+    threads.append(ALIVE)
+    
     S = threading.Thread(
         target = Server,
         args = (IP, PORT, ID, c_s)
