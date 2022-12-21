@@ -4,6 +4,7 @@ from . import Client
 from . import Package
 import numpy as np
 import os 
+import sys
 
 def get_address(target = ""):
 
@@ -75,12 +76,13 @@ def takeImg(args):
 def stitchImg(args):
 
     filename  = args[0]
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    print (this_dir)
-    from .. import process
-    from process.knotscrapper import knotscrap as ks
-    base_dir = os.path.abspath(f"../ema-timber/examples/{filename}")
-    ks.run(base_dir)
+    base_dir =os.path.abspath("./")
+    sys.path.append(base_dir)
+    from ema_timber.process.knotscrapper import knotscrap as ks
+    base_dir = os.path.abspath(f"./examples")
+    ks.run(base_dir, filename)
+
+    return False, False
 
     
 

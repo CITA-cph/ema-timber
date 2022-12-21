@@ -54,7 +54,7 @@ class Server():
         while True:
             try:
                 c, addr = self.sock.accept()
-                print(f'\n[- {self.id} -] - Connected to :', addr)
+                
                 data = self.recvdata(c) # GETTING DATA
                 
                 if data:
@@ -63,10 +63,12 @@ class Server():
                         print("Terminating :", addr)
                         continue
                     elif data ==b"FILE":
+                        print(f'\n[- {self.id} -] - Connected to :', addr)
                         self.recvBytestream(c)
                         print("Terminating :", addr)
                         continue
                     c.recv(1024) # CLOSING
+                    print(f'\n[- {self.id} -] - Connected to :', addr)
                     print("Terminating :", addr)
                     self.processor.postJob(data)
 
@@ -80,8 +82,10 @@ class Server():
         p_IP = self.recvdata(c).decode()
         p_PORT = int(self.recvdata(c).decode())
         c.recv(1024) # CLOSING
+        p0 = self.processor.pages.address
         self.processor.pages.set_address({p_ID:[p_IP, p_PORT]})
-        print (self.processor.pages.address)
+        if p0 != self.processor.pages.address:
+            print (self.processor.pages.address)
 
     def recvBytestream(self,c):
 

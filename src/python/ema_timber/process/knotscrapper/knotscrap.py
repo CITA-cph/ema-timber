@@ -4,7 +4,7 @@ from . import prepFile
 from . import editImg
 from . import numtoimage as ni
 
-def run(base_dir):
+def run(base_dir, date):
 
     #-+-+-+-+-+-#
     np_array = "np_array"
@@ -17,8 +17,8 @@ def run(base_dir):
 
     #-+-+-+-+-+-#
 
-    mtx = editImg.getmtx(os.path.join(base_dir , "calibmatrix.txt"))
-    dist = editImg.getdist(os.path.join(base_dir , "dist.txt"))
+    mtx = editImg.getmtx(os.path.join(".", base_dir , "calibmatrix.txt"))
+    dist = editImg.getdist(os.path.join(".",base_dir , "dist.txt"))
     trans = 0
     cropls = [(378, 0), (882, 2404)] 
 
@@ -26,15 +26,15 @@ def run(base_dir):
 
     Board_ls = [] # List of Boards
 
-    np_array_paths = prepFile.getPaths(os.path.join(base_dir, np_array))
+    np_array_paths = prepFile.getPaths(os.path.join(base_dir, date, np_array))
     for i in range(len(np_array_paths)):
             id = prepFile.naming(i)
             imgs = ni.makeImgs(np_array_paths[i])
-            prepFile.writeImgs(imgs,os.path.join(base_dir,raw_img), dir= id , id = id )
+            prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= id , id = id )
 
 
 
-    raw_img_paths = prepFile.getPaths(os.path.join(base_dir, raw_img)) # Paths to raw IMGS
+    raw_img_paths = prepFile.getPaths(os.path.join(base_dir,date, raw_img)) # Paths to raw IMGS
 
     for i in range(len(raw_img_paths)): # Create class object board
         id = prepFile.naming(i)
@@ -67,13 +67,13 @@ def run(base_dir):
         b.scan(show = False, bounds = True , knots = True , resize = True, s = 0.2)
 
         # Save imgs
-        prepFile.writeImgs(b.imgs[1],os.path.join(base_dir,post_img), dir= "", id = b.id ) # Save Stitched img
-        prepFile.writeImgs(b.imgs[2],os.path.join(base_dir,knots_img), dir= b.id, id = b.id ) # Save Knots img
-        prepFile.writeImgs(b.imgs[3],os.path.join(base_dir,looked_img), dir= "", id = b.id ) # Save Scanned img
+        prepFile.writeImgs(b.imgs[1],os.path.join(base_dir,date,post_img), dir= "", id = b.id ) # Save Stitched img
+        prepFile.writeImgs(b.imgs[2],os.path.join(base_dir,date,knots_img), dir= b.id, id = b.id ) # Save Knots img
+        prepFile.writeImgs(b.imgs[3],os.path.join(base_dir,date,looked_img), dir= "", id = b.id ) # Save Scanned img
 
         # Save TXT
-        prepFile.datatoTxt(b.knots[1], os.path.join(base_dir,knots_pos), dir= "", id = b.id, extra = "_kpos") # Save Knots pos to Txt
-        prepFile.datatoTxt(b.bound[1], os.path.join(base_dir,bound_pos), dir= "", id = b.id, extra = "_bpos") # Save Bounds pos to Txt
+        prepFile.datatoTxt(b.knots[1], os.path.join(base_dir,date,knots_pos), dir= "", id = b.id, extra = "_kpos") # Save Knots pos to Txt
+        prepFile.datatoTxt(b.bound[1], os.path.join(base_dir,date,bound_pos), dir= "", id = b.id, extra = "_bpos") # Save Bounds pos to Txt
 
         return True
     

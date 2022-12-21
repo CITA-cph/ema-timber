@@ -6,13 +6,13 @@ import time
 def clientSetup(HOST,PORT):
     
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-
+    s.settimeout(5)
     try:
         s.connect((HOST,PORT))
-        print(f"++++ Communicating with {HOST} : {PORT} ++++")
+        #print(f"++++ Communicating with {HOST} : {PORT} ++++")
         return s
     except:
-        print(f"++++ Could not communicate with {HOST} : {PORT} ++++")
+        #print(f"++++ Could not communicate with {HOST} : {PORT} ++++")
         return False
 
 def clientOut(TARGET_IP, TARGET_PORT,message):
