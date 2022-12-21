@@ -4,14 +4,29 @@ import sys
 import os
 import threading
 import socket
+import time
 
 from ema_timber.communicate import Client, Server, Instructor, i_sProt
 from ema_timber.communicate.Broadcast import tunein
+
+def alive(BROADPORT,TYPE, ID, IP, PORT):
+    while True:
+        # LISTEN TO BC
+        T_HOST, T_PORT = tunein(BROADPORT, TYPE)
+        if T_HOST and T_HOST:
+            print ("SERVER addr : ", T_HOST, T_PORT)
+            # GIVE ADDR
+            Client.PING(T_HOST, T_PORT, ID, IP, PORT)
+            time.sleep(50)
+        else:
+            print ("Lost connection to server")
+            time.sleep(5)
 
 def main():
 
     #+++++++++++++++++++++++++++++#
     ID = "99"
+    TYPE = 0
     HOSTNAME = socket.gethostname()
     IP = socket.gethostbyname(HOSTNAME)
     PORT = 52344 #RECIVING DATA AT
@@ -27,22 +42,31 @@ def main():
     threads = []
 
 
-    T_HOST, T_PORT = tunein(BROADPORT, 0)
-    print ("SERVER addr : ", T_HOST, T_PORT)
-    
-    ALIVE = threading.Thread(
-        target = Client.alive,
-        args = (T_HOST, T_PORT, ID, IP, PORT)
-    )
-    ALIVE.start()
-    threads.append(ALIVE)
-
     S = threading.Thread(
         target = Server,
         args = (IP, PORT, ID, i_s)
         )
     S.start()
     threads.append(S)
+
+    ALIVE = threading.Thread(
+        target = alive,
+        args = (BROADPORT, TYPE, ID, IP, PORT)
+    )
+    ALIVE.start()
+    threads.append(ALIVE)
+
+    run = False
+
+    while not run:
+         # LISTEN TO BC
+        T_HOST, T_PORT = tunein(BROADPORT, TYPE)
+        if T_HOST and T_HOST:
+            run = True
+        else:
+            time.sleep(2)
+
+
 
     operate = threading.Thread(
         target = Instructor,
