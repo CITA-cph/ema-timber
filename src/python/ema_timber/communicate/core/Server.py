@@ -5,6 +5,9 @@ current = os.path.dirname(os.path.abspath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
 
+print(f"{os.path.abspath(__file__)}")
+print(os.getcwd())
+
 import copy
 import socket
 import time
@@ -13,6 +16,7 @@ import numpy as np
 import Processor
 import protocol
 
+
 def main( HOST, PORT, id, prgls ):
     s = Server( HOST, PORT, id, prgls)
 
@@ -20,9 +24,9 @@ def makeDir(parentpath):
     if not os.path.exists(parentpath):
         os.makedirs(parentpath)
 
-date =  time.strftime("%y%m%d")
-base_dir = os.path.abspath(f"../ema-timber/examples/{date}")
-makeDir(base_dir)
+# date =  time.strftime("%y%m%d")
+# base_dir = os.path.abspath(f"../ema-timber/examples/{date}")
+# makeDir(base_dir)
 
 
 class Server(Processor.Processor):
@@ -33,6 +37,7 @@ class Server(Processor.Processor):
         self.PORT = PORT
         self.id  = id
         self.prgls = prgls | protocol.getmods()
+        print(self.prgls)
         Processor.Processor.__init__(self,id,self.prgls, no_drones = no_drones)
         self.set_address({self.id:[self.IP, self.PORT]})
         self.sock = self.socketSetup()
@@ -148,7 +153,7 @@ class Server(Processor.Processor):
             c.recv(1024)
         c.recv(1024) # CLOSING
 if __name__ == "__main__":
-    
+    exit()
     HOSTNAME = socket.gethostname()
     HOST = socket.gethostbyname(HOSTNAME)
     PORT = 55556

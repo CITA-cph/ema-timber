@@ -1,2 +1,2 @@
-from Knotscraper import Knotscraper
+from knotscraper import Knotscraper
 print ("SHALLOW KNOT")

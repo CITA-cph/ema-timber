@@ -50,6 +50,9 @@ class Structure():
     def keys(self):
         return self.graph.graph.keys()
 
+    def values(self):
+        return self.graph.graph.values()
+
     def increment_joint_id(self):
         self.last_joint_id += 1
         return f"J{self.last_joint_id:04d}"
