@@ -10,7 +10,7 @@ core = os.path.abspath(os.path.join(current ,".."))
 sys.path.append(core)
 
 import Wrapper
-import talk
+from . import talk
 
 print ("DEEP HELLO")
 class Helloworld():

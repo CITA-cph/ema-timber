@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import prepFile
+from . import prepFile
 
 class Board:
     def __init__(self, id,  imgs, status):

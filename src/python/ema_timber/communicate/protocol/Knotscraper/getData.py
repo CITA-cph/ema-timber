@@ -1,8 +1,8 @@
 import os 
-import Board
-import prepFile
-import editImg
-import numtoimage as ni
+from . import Board, prepFile, editImg, numtoimage as ni
+# from . import prepFile
+# import editImg
+# import numtoimage as ni
 
 def run(base_dir, date):
 

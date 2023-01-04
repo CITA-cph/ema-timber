@@ -11,7 +11,7 @@ sys.path.append(core)
 
 import Wrapper
 import time
-import getData
+from . import getData
 
 print ("DEEP KNOT")
 class Knotscraper():

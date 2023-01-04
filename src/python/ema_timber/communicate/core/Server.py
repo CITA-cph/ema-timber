@@ -36,7 +36,7 @@ class Server(Processor.Processor):
         self.IP  = HOST
         self.PORT = PORT
         self.id  = id
-        self.prgls = prgls | protocol.getmods()
+        self.prgls = prgls | protocol.modules
         print(self.prgls)
         Processor.Processor.__init__(self,id,self.prgls, no_drones = no_drones)
         self.set_address({self.id:[self.IP, self.PORT]})
@@ -152,8 +152,10 @@ class Server(Processor.Processor):
             c.send(k.encode())
             c.recv(1024)
         c.recv(1024) # CLOSING
+
 if __name__ == "__main__":
-    exit()
+    #print(protocol.__all__)
+    #exit()
     HOSTNAME = socket.gethostname()
     HOST = socket.gethostbyname(HOSTNAME)
     PORT = 55556
