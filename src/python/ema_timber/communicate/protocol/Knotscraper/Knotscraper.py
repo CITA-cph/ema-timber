@@ -13,7 +13,8 @@ import Wrapper
 import time
 from . import getData
 
-print ("DEEP KNOT")
+#print ("DEEP KNOT")
+
 class Knotscraper():
 
     def __init__(self, args , pages):

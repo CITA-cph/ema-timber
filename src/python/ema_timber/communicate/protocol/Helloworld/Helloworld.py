@@ -12,7 +12,8 @@ sys.path.append(core)
 import Wrapper
 from . import talk
 
-print ("DEEP HELLO")
+#print ("DEEP HELLO")
+
 class Helloworld():
 
     def __init__(self, args , pages ): # PERFORM TASK
