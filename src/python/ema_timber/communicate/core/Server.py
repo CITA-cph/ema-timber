@@ -1,10 +1,20 @@
-# SERVER CHANNEL
+import os
+import sys
+
+current = os.path.dirname(os.path.abspath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
+import copy
 import socket
 import time
+
 import numpy as np
-from . import Processor
-import os
-import copy
+import Processor
+import protocol
+
+def main( HOST, PORT, id, prgls ):
+    s = Server( HOST, PORT, id, prgls)
 
 def makeDir(parentpath):
     if not os.path.exists(parentpath):
@@ -14,15 +24,17 @@ date =  time.strftime("%y%m%d")
 base_dir = os.path.abspath(f"../ema-timber/examples/{date}")
 makeDir(base_dir)
 
-class Server():
 
-    def __init__(self, HOST, PORT, id, prgls):
+class Server(Processor.Processor):
+
+    def __init__(self, HOST, PORT, id, prgls = {} , no_drones = 1):
         
         self.IP  = HOST
         self.PORT = PORT
         self.id  = id
-        self.processor = Processor(prgls)
-        self.processor.pages.set_address({self.id:[self.IP, self.PORT]})
+        self.prgls = prgls | protocol.getmods()
+        Processor.Processor.__init__(self,id,self.prgls, no_drones = no_drones)
+        self.set_address({self.id:[self.IP, self.PORT]})
         self.sock = self.socketSetup()
         if self.sock:
             self.channel()
@@ -34,7 +46,7 @@ class Server():
         try:
             s.bind((self.IP, self.PORT))
             time.sleep(0.05)
-            print(f"[- {self.id} -] binded to port:{self.IP} {self.PORT}")
+            print(f"[- {self.id} -] binded to port: {self.IP} {self.PORT}")
             s.listen()
             print(f"[- {self.id} -] is listening" )
             return s
@@ -59,22 +71,31 @@ class Server():
                 data = self.recvdata(c) # GETTING DATA
                 
                 if data:
+
                     if data == b"PING":
                         self.updatePages(c)
                         #print("Terminating :", addr)
                         continue
-                    elif data ==b"FILE":
+
+                    elif data == b"FILE":
                         print(f'\n[- {self.id} -] - Connected to :', addr)
                         self.recvBytestream(c)
                         print("Terminating :", addr)
                         continue
+                    
+                    elif data == b"MODS":
+                       self.send_modls(c)
+                       continue
+
+
                     c.recv(1024) # CLOSING
                     print(f'\n[- {self.id} -] - Connected to :', addr)
                     print("Terminating :", addr)
-                    self.processor.postJob(data)
+                    self.postJob(data)
 
-            except:
+            except Exception as e:
                 c.close()
+                print (e)
                 print("DATA ERROR")
 
     def updatePages(self, c):
@@ -83,11 +104,11 @@ class Server():
         p_IP = self.recvdata(c).decode()
         p_PORT = int(self.recvdata(c).decode())
         c.recv(1024) # CLOSING
-        p0 = copy.copy(self.processor.pages.address)
-        self.processor.pages.set_address({p_ID:[p_IP, p_PORT]})
-        if p0 != self.processor.pages.address:
+        p0 = copy.copy(self.address)
+        self.set_address({p_ID:[p_IP, p_PORT]})
+        if p0 != self.address:
 
-            print (self.processor.pages.address)
+            print (self.address)
 
     def recvBytestream(self,c):
 
@@ -116,5 +137,21 @@ class Server():
 
         output_dir = os.path.join(folder_dir, dst[1] + "_" + dst[2] + ".npy")
         np.save (output_dir,y)
-
-
+    
+    def send_modls(self , c):
+        c.recv(1024)
+        l = list(self.prgls.keys())
+        c.send(str(len(l)).encode())
+        c.recv(1024)
+        for k in list(self.prgls.keys()):
+            c.send(k.encode())
+            c.recv(1024)
+        c.recv(1024) # CLOSING
+if __name__ == "__main__":
+    
+    HOSTNAME = socket.gethostname()
+    HOST = socket.gethostbyname(HOSTNAME)
+    PORT = 55556
+    id = "02"
+    ls = {}
+    Server(HOST, PORT, id, ls)

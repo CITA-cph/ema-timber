@@ -4,9 +4,10 @@ import json
 
 class Yellowpages:
 
-    def __init__(self,dir = {}):
+    def __init__(self,id,dir = {}):
+        self.id = id
         self.address = dir
-        self.dest = "yellowpages.json"
+        self.dest = str(id)+"_yellowpages.json"
         self.updateJson()
         
     def set_address(self, dir = {}):

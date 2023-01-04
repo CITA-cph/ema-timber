@@ -2,16 +2,16 @@
 from queue import Queue
 from threading import Thread
 
-from . import Package
-from . import Yellowpages
+import Package
+import Yellowpages
 
-class Processor():
+class Processor(Yellowpages.Yellowpages):
 
-    def __init__(self, prgls,no_drones=1):
-        
+    def __init__(self,id, prgls,no_drones=1):
+        Yellowpages.Yellowpages.__init__(self,id)
+        self.id = id
         self.prgls = prgls
         self.jobqueue = Queue()
-        self.pages = Yellowpages.Yellowpages()
         self.drones = self.drone(no_drones)
     
     def postJob(self, job):
@@ -24,7 +24,7 @@ class Processor():
             self.jobqueue.put() #PACKAGE PACK AND RETURN FUNCTION NOT FOUND
 
     def drone(self, no_drones):   
-        
+        print (f"{no_drones} thread(s)")
         for i in range(no_drones):
             worker = Thread(target=self.dostuff, args=(), daemon=True)
             worker.start()
@@ -32,13 +32,28 @@ class Processor():
     def dostuff(self):
         while True:
             try:
-                f, args = self.jobqueue.get()
-                f0, args0 = f(args)
-                if f0:
-                    self.jobqueue.put([f0,args0])
+                fu, args = self.jobqueue.get()
+                print (fu)
+                print (args)
+                try:
+                    task = fu(args , self.address)
+                    try:
+                        f0, args0 = task.out()
+                    except:
+                        continue
+                    if f0 and f0 in self.prgls:
+                        self.jobqueue.put([self.prgls[f0],args0])
+                        
+
+                except Exception as e:
+                    print (e)
+                    print (f"error with  {fu}")
+
             except self.jobqueue.Empty:
                 continue
+
             else:
                 self.jobqueue.task_done()
+
     
     

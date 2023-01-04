@@ -19,7 +19,7 @@ def clientOut(TARGET_IP, TARGET_PORT,message):
     s = clientSetup(TARGET_IP,TARGET_PORT)
     try:
         s.send(message)
-        print(message)
+        #print(message)
         data = s.recv(1024)
         print (f"--- {data.decode()} ---")
         s.close()
@@ -62,3 +62,38 @@ def sendByteStream(TARGET_IP, TARGET_PORT,bytestream, dst):
         print("SEND OK")
         s.close()
 
+def MODS(S_HOST, S_PORT, show = False):
+    s = clientSetup(S_HOST,S_PORT)
+    ls  = []
+    if s:
+        s.send(b"MODS")
+        s.recv(1024)
+        s.send(b"waiting for list")
+        no = s.recv(1024).decode()
+        s.send(f"waiting for {no} items".encode())
+        for n in range(int(no)):
+            data  = s.recv(1024).decode()
+            ls.append(data)
+            s.send("received".encode())
+        if show:
+            print (f"MOD OK")
+        s.close()
+        return True, ls
+    else:
+        return False, False
+
+def ALIVE(S_HOST, S_PORT, ID, IP,  PORT):
+    delta  = 0
+    while True:
+        res = PING(S_HOST, S_PORT, ID, IP, PORT, False)
+        if res:
+            
+            if delta > 0:
+                print  ("\nReconnected to server")
+            delta = 0
+            time.sleep(5)
+        else:
+            if delta == 0:
+                print ("\nLost connection to server")
+            time.sleep(2)
+            delta += 1
