@@ -37,6 +37,7 @@ class Knotscraper():
             case "callCam": # INSTRUCTOR TO SERVER TO CAMERA
                 self.callCam()
             case "takeImg": # CAMERA
+                self.takeImg()
                 pass
             case "sendimg": # CAMERA TO SERVER
                 pass
@@ -45,7 +46,14 @@ class Knotscraper():
             case "done": # SERVER TO INSTRUCTOR
                 pass
             case "listen": # USED TO PRINT 
-                print (self.task[1])
+                if len(self.re_addr) > 2:
+                    print (self.task[1])
+                    chain = self.re_addr[:-2]
+                    T_HOST, T_PORT = self.book[chain[-2:]]
+                    message = Wrapper.Package.pack(TASK="Knotscraper", args = [chain,["listen", self.task[1]]])
+                    Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+                else:
+                    print (self.task[1])
                 self.outputA = False
                 self.outputB = False
 
@@ -98,5 +106,36 @@ class Knotscraper():
                 self.outputA = False
                 self.outputB = False
     
+    def takeImg(self):
+
+        S_HOST, S_PORT = self.book[self.re_addr[2:4]]
+        A_HOST, A_PORT = self.book[self.re_addr[-2:]]
+
+        try:
+
+            from picamera2 import Picamera2
+            picam2 = Picamera2()
+            config = picam2.create_still_configuration(main = {"size": picam2.sensor_resolution})
+            picam2.configure(config)
+
+            picam2.start()
+            time.sleep(2)
+            picam2.stop()
+            
+
+        except Exception as e:
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[:-2],["listen", f"{self.id} - {e}"]])
+            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+            print (e)
+            self.outputA = False
+            self.outputB = False
+            
+        
+
+        
+
+
+        
+        pass
     def out (self): # OUPUT OF CLASS
         return self.outputA, self.outputB
