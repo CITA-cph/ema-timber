@@ -86,7 +86,7 @@ class Knotscraper():
                     print (f"Could not connect to {c}")
                     message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.id,["listen", f"Could not get a respond from {c}"]])
                     Wrapper.Client.clientOut(I_HOST, I_PORT, message)
-                    print (f"<Knotscraper FAILED> - Could not get a respond from {c}")
+                    print (f"<Knotscraper> -FAILED - Could not get a respond from {c}")
                     self.outputA = False
                     self.outputB = False
 
@@ -94,7 +94,7 @@ class Knotscraper():
                 print (f"{c} has not connected to the Server")
                 message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.id,["listen", f"{c} has not connected to the Server"]])
                 Wrapper.Client.clientOut(I_HOST, I_PORT, message)
-                print (f"<Knotscraper FAILED> - {c} has not connected to the Server")
+                print (f"<Knotscraper> -FAILED - {c} has not connected to the Server")
                 self.outputA = False
                 self.outputB = False
     

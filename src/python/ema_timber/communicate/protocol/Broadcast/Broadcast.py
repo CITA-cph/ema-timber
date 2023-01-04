@@ -6,16 +6,19 @@ import time
 
 class Broadcast():
 
-    def __init__(self, HOST= "127.0.0.1", PORT= 55555, MESSAGE=b"WOOD IS COOL"):
+    def __init__(self, HOST= "127.0.0.1", PORT= 55555, task = "s",  MESSAGE=b"WOOD IS COOL"):
         
         self.HOST = HOST
         self.PORT = PORT
         self.MESSAGE = MESSAGE
 
-        self.broadcasting()
+        if task == "s":
+            self.broadcasting()
+        else:
+            self.addr , self.message = self.tunein(self.PORT)
 
     def broadcasting(self):
-
+        
         server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -25,12 +28,6 @@ class Broadcast():
         while True:
             server.sendto(self.MESSAGE, ("<broadcast>", self.PORT))
             time.sleep(1)
-
-class Audience():
-
-    def __init__(self, PORT= 55555):
-
-        self.addr , self.message = self.tunein(PORT)
 
     def tunein(self,PORT):
 
@@ -50,11 +47,6 @@ class Audience():
             #print (f"Failed to reach broadcast at {PORT}")
             return False, False
 
-    def __enter__(self):
-        return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        del self.addr
-        del self.message
 
 if __name__ == "__main__":
     HOSTNAME = socket.gethostname()

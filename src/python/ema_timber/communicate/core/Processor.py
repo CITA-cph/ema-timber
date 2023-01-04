@@ -33,8 +33,6 @@ class Processor(Yellowpages.Yellowpages):
         while True:
             try:
                 fu, args = self.jobqueue.get()
-                print (fu)
-                print (args)
                 try:
                     task = fu(args , self.address)
                     try:

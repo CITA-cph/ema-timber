@@ -22,7 +22,7 @@ def main():
     BROADPORT = 55555 #BROADCASTING AT
     SERVERPORT = 55556 #RECVING AT
     idserver = "02"
-    print (f"SERVER : \n\t{HOSTNAME} - {HOST}")
+    print (f"\nSERVER : \n\t{HOSTNAME} - {HOST}")
     print (f"PORTS : \n\tBroadcasting - 01 : {BROADPORT} \n\tServer - {idserver} : {SERVERPORT}\n")
     #+++++++++++++++++++++++++++++#
 
@@ -31,7 +31,7 @@ def main():
     # SET UP BROADCAST
     broadcaster = threading.Thread(
         target = Server.protocol.Broadcast.Broadcast,
-        args = (HOST, BROADPORT, str(SERVERPORT).encode())
+        args = (HOST, BROADPORT,"s",str(SERVERPORT).encode())
         )
     
     broadcaster.start()

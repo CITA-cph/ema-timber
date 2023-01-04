@@ -42,7 +42,7 @@ def main():
     run = True
     delta = 0
     while run:
-        post = Server.protocol.Broadcast.Audience(BROADPORT)
+        post = Server.protocol.Broadcast.Broadcast(PORT = BROADPORT, task  = "l")
         T_HOST, T_PORT = post.addr, post.message
         if T_HOST:
             run = False

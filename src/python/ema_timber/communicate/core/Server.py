@@ -37,7 +37,6 @@ class Server(Processor.Processor):
         self.PORT = PORT
         self.id  = id
         self.prgls = prgls | protocol.modules
-        print(self.prgls)
         Processor.Processor.__init__(self,id,self.prgls, no_drones = no_drones)
         self.set_address({self.id:[self.IP, self.PORT]})
         self.sock = self.socketSetup()
