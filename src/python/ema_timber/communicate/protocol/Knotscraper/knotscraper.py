@@ -39,7 +39,7 @@ class Knotscraper():
             case "takeImg": # CAMERA
                 self.takeImg()
                 pass
-            case "sendimg": # CAMERA TO SERVER
+            case "sendImg": # CAMERA TO SERVER
                 pass
             case "processImg": # SERVER
                 pass
@@ -54,6 +54,15 @@ class Knotscraper():
                     Wrapper.Client.clientOut(T_HOST, T_PORT, message)
                 else:
                     print (self.task[1])
+                self.outputA = False
+                self.outputB = False
+            
+            case _:
+
+                T_HOST, T_PORT = self.book[self.re_addr[-2:]]
+                message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[-2:],["listen",f"{self.id} - Command < {task} > not recognized"]])
+                Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+                print (f"Command < {task} > not recognized")
                 self.outputA = False
                 self.outputB = False
 
@@ -72,11 +81,10 @@ class Knotscraper():
                 res = Wrapper.Client.PING(c_HOST, c_PORT, self.id, S_HOST, S_PORT )
                 
                 if res:
-                    chain += c
                     
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
-                        args = [chain, ["takeImg"]]
+                        args = [chain, ["takeImg", "rawImg"]]
                     )
                     Wrapper.Client.clientOut(c_HOST, c_PORT, message)
 
@@ -108,8 +116,8 @@ class Knotscraper():
     
     def takeImg(self):
 
-        S_HOST, S_PORT = self.book[self.re_addr[2:4]]
-        A_HOST, A_PORT = self.book[self.re_addr[-2:]]
+        S_HOST, S_PORT = self.book[self.re_addr[-2:]]
+        filename = self.task[1]
 
         try:
 
@@ -122,20 +130,37 @@ class Knotscraper():
             time.sleep(2)
             picam2.stop()
             
+            # TAKE IMAGE CODE HERE#
+            for i in range(10):
+                picam2.start()
+                time.sleep(1)
+                raw = picam2.capture_array("main")
+                raw_np = np.array(raw).tobytes()
+                print (len(raw_np))
+                print (raw.shape)
+                Wrapper.Client.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
+                picam2.stop()
+            
+            picam2.close()
+            print ("takeImg - ok | sendImg - ok")
+
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"{self.id} - takeImg - ok | sendImg - ok"]])
+            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+
+            date =  time.strftime("%y%m%d")
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["processImg", date]])
+            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+            
+            print("<takeImg> DONE")
+            self.outputA = False
+            self.outputB = False
 
         except Exception as e:
-            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[:-2],["listen", f"{self.id} - {e}"]])
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"{self.id} - {e}"]])
             Wrapper.Client.clientOut(S_HOST, S_PORT, message)
             print (e)
             self.outputA = False
             self.outputB = False
-            
-        
 
-        
-
-
-        
-        pass
     def out (self): # OUPUT OF CLASS
         return self.outputA, self.outputB
