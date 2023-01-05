@@ -1,2 +1,2 @@
-from .Helloworld import Helloworld
+from .helloworld import Helloworld
 # print ("SHALLOW HELLO")
