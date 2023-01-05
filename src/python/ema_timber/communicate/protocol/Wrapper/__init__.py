@@ -2,16 +2,13 @@ import os
 import sys
 
 current = os.path.dirname(os.path.abspath(__file__))
-core = os.path.abspath(os.path.join(current ,"../../","core"))
-sys.path.append(core)
+#print (current)
+parent = os.path.abspath(os.path.join(current ,".."))
+#print(parent)
+sys.path.append(parent)
 
-import Client
-import Package
+from core import Client
+from core import Package
 
 class Wrapper():
     pass
-if __name__ == "__main__":
-    print (current)
-    print (core)
-    print (dir(Client))
-    print (dir(Package))
