@@ -1,2 +1,2 @@
-from .knotscraper import Knotscraper
+from .Knotscraper import Knotscraper
 # print ("SHALLOW KNOT")

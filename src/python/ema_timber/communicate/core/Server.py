@@ -135,6 +135,7 @@ class Server(Processor.Processor):
         dst  = tmp.split("/") #parent/subname/
         c.recv(1024) #CLOSING
 
+        raise Exception("Jesus Christ, Pin, 'base_dir' doesn't exist! You took it out!")
         folder_dir = os.path.join(base_dir, dst[0],dst[1])
         makeDir(folder_dir)
         print (f"saved to {folder_dir}")
