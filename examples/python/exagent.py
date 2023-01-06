@@ -3,7 +3,7 @@ import sys
 import time
 
 from util import import_ema_timber
-
+print ("hello")
 import_ema_timber()
 
 date =  time.strftime("%y%m%d")
