@@ -1,13 +1,12 @@
 import os
 import sys
-import time 
+import time
+
+from util import import_ema_timber
+
+import_ema_timber()
 
 date =  time.strftime("%y%m%d")
-current = os.path.dirname(os.path.abspath(__file__))
-print (current)
-core = os.path.abspath(os.path.join(current ,"../..","src/python/ema_timber/communicate/core"))
-print (core)
-sys.path.append(core)
 save_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
 print (save_dir)
 
@@ -15,7 +14,9 @@ import socket
 import threading
 import time
 
-import Server, Instructor, Client
+from ema_timber.communicate.core import Client, Instructor, Server
+from ema_timber.communicate import protocol
+
 
 def main():
 
@@ -36,7 +37,7 @@ def main():
 
 
     S = threading.Thread(
-        target = Server.Server,
+        target = Server,
         args = (IP, PORT, ID, {} , 1 , save_dir)
         )
     S.start()
@@ -46,7 +47,7 @@ def main():
     run = True
     delta = 0
     while run:
-        post = Server.protocol.Broadcast.Broadcast(PORT = BROADPORT, task  = "l")
+        post = protocol.Broadcast.Broadcast(PORT = BROADPORT, task  = "l")
         T_HOST, T_PORT = post.addr, post.message
         if T_HOST:
             run = False
@@ -66,7 +67,7 @@ def main():
     threads.append(alive)
 
     operate = threading.Thread(
-        target = Instructor.Instructor,
+        target = Instructor,
         args= (T_HOST, T_PORT, ID)
         )
     operate.start()
