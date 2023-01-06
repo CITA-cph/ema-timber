@@ -1,12 +1,14 @@
 import os
 import sys
+import time 
 
+date =  time.strftime("%y%m%d")
 current = os.path.dirname(os.path.abspath(__file__))
 print (current)
 core = os.path.abspath(os.path.join(current ,"../..","src/python/ema_timber/communicate/core"))
 print (core)
 sys.path.append(core)
-
+save_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
 
 import socket
 import threading
@@ -39,7 +41,7 @@ def main():
 
     S = threading.Thread(
         target = Server.Server,
-        args = (HOST, SERVERPORT, idserver, {} , 5)
+        args = (HOST, SERVERPORT, idserver, {} , 5, save_dir)
         )
     S.start()
     threads.append(S)

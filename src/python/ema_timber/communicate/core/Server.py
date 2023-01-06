@@ -24,15 +24,17 @@ def makeDir(parentpath):
     if not os.path.exists(parentpath):
         os.makedirs(parentpath)
 
-# date =  time.strftime("%y%m%d")
-# base_dir = os.path.abspath(f"../ema-timber/examples/{date}")
-# makeDir(base_dir)
+date =  time.strftime("%y%m%d")
+base_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
+
 
 
 class Server(Processor.Processor):
 
-    def __init__(self, HOST, PORT, id, prgls = {} , no_drones = 1):
-        
+    def __init__(self, HOST, PORT, id, prgls = {} , no_drones = 1, addr = base_dir ):
+
+        self.base_dir = addr
+        makeDir(self.base_dir)
         self.IP  = HOST
         self.PORT = PORT
         self.id  = id
@@ -135,8 +137,7 @@ class Server(Processor.Processor):
         dst  = tmp.split("/") #parent/subname/
         c.recv(1024) #CLOSING
 
-        raise Exception("Jesus Christ, Pin, 'base_dir' doesn't exist! You took it out!")
-        folder_dir = os.path.join(base_dir, dst[0],dst[1])
+        folder_dir = os.path.join(self.base_dir, dst[0],dst[1])
         makeDir(folder_dir)
         print (f"saved to {folder_dir}")
 
