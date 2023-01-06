@@ -1,6 +1,6 @@
 import time
-import Client
-import Package
+from . import Client
+from . import Package
 
 
 class Instructor():

@@ -3,7 +3,7 @@ import sys
 
 current = os.path.dirname(os.path.abspath(__file__))
 parent = os.path.dirname(current)
-sys.path.append(parent)
+#sys.path.append(parent)
 
 print(f"{os.path.abspath(__file__)}")
 print(os.getcwd())
@@ -13,8 +13,8 @@ import socket
 import time
 
 import numpy as np
-import Processor
-import protocol
+from . import Processor
+import ema_timber.communicate.protocol as ema_protocol
 
 
 def main( HOST, PORT, id, prgls ):
@@ -27,9 +27,7 @@ def makeDir(parentpath):
 date =  time.strftime("%y%m%d")
 base_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
 
-
-
-class Server(Processor.Processor):
+class Server(Processor):
 
     def __init__(self, HOST, PORT, id, prgls = {} , no_drones = 1, addr = base_dir ):
 
@@ -38,8 +36,8 @@ class Server(Processor.Processor):
         self.IP  = HOST
         self.PORT = PORT
         self.id  = id
-        self.prgls = prgls | protocol.modules
-        Processor.Processor.__init__(self,id,self.prgls, no_drones = no_drones)
+        self.prgls = prgls | ema_protocol.modules
+        Processor.__init__(self,id,self.prgls, no_drones = no_drones)
         self.set_address({self.id:[self.IP, self.PORT]})
         self.sock = self.socketSetup()
         if self.sock:

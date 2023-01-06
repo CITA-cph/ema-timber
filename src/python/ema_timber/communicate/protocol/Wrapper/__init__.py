@@ -7,8 +7,8 @@ parent = os.path.abspath(os.path.join(current ,".."))
 #print(parent)
 #sys.path.append(parent)
 
-from core import Client
-from core import Package
+from ema_timber.communicate.core import Client
+from ema_timber.communicate.core import Package
 
 class Wrapper():
     pass
