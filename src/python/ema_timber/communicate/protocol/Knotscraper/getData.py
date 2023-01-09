@@ -1,12 +1,10 @@
 import os 
 from . import Board, prepFile, editImg, numtoimage as ni
-# from . import prepFile
-# import editImg
-# import numtoimage as ni
 
-def run(base_dir, date):
+def run(base_dir, date, filename):
 
     #-+-+-+-+-+-#
+    camera_config = "camera_config"
     np_array = "np_array"
     raw_img = "raw_img"
     post_img = "post_img"
@@ -17,33 +15,28 @@ def run(base_dir, date):
 
     #-+-+-+-+-+-#
 
-    mtx = editImg.getmtx(os.path.join(".", base_dir , "calibmatrix.txt"))
-    dist = editImg.getdist(os.path.join(".",base_dir , "dist.txt"))
-    trans = 0
-    cropls = [(378, 0), (882, 2404)] 
+    mtx = editImg.getmtx(os.path.join( base_dir , camera_config, "calibmatrix.txt"))
+    dist = editImg.getdist(os.path.join(base_dir , camera_config, "dist.txt"))
+    trans = 0 # goes to camera_config
+    cropls = [(378, 0), (882, 2404)] # goes to camera_config
 
     #-+-+-+-+-+-#
 
     Board_ls = [] # List of Boards
 
-    np_array_paths = prepFile.getPaths(os.path.join(base_dir, date, np_array))
-    for i in range(len(np_array_paths)):
-            id = prepFile.naming(i)
-            imgs = ni.makeImgs(np_array_paths[i])
-            prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= id , id = id )
+    np_array_paths = os.path.join(base_dir, date, np_array+"/"+filename)
+    imgs = ni.makeImgs(np_array_paths)
+    prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= filename , id = filename )
 
 
 
-    raw_img_paths = prepFile.getPaths(os.path.join(base_dir,date, raw_img)) # Paths to raw IMGS
+    raw_img_paths = os.path.join(base_dir,date, raw_img+"/"+filename) # Paths to raw IMGS
 
-    for i in range(len(raw_img_paths)): # Create class object board
-        id = prepFile.naming(i)
-        imgs = prepFile.getImgs(raw_img_paths[i])
+    imgs = prepFile.getImgs(raw_img_paths)
 
-        a = Board.Board(id, imgs, "RAW")
-        print ("{} - created".format(id))
-        Board_ls.append(a)
-        
+    a = Board.Board(filename, imgs, "RAW")
+    print ("{} - created".format(filename))
+    Board_ls.append(a)
 
     for b in Board_ls: # Fix and Stitch IMG
         
@@ -53,9 +46,7 @@ def run(base_dir, date):
             b.status = "STITCHED"
             print ("{} - {}".format(b.id, b.status))
         except:
-
             print("{}.png could not be created".format(b.id))
-            raise()
         
         # Prepare image
         b.contrastImg(2.2, (45,15))
@@ -75,5 +66,4 @@ def run(base_dir, date):
         prepFile.datatoTxt(b.knots[1], os.path.join(base_dir,date,knots_pos), dir= "", id = b.id, extra = "_kpos") # Save Knots pos to Txt
         prepFile.datatoTxt(b.bound[1], os.path.join(base_dir,date,bound_pos), dir= "", id = b.id, extra = "_bpos") # Save Bounds pos to Txt
 
-        return True
     

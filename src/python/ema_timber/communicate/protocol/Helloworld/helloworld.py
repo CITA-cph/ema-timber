@@ -4,9 +4,7 @@ import os
 import sys
 
 current = os.path.dirname(os.path.abspath(__file__))
-#print (current)
 core = os.path.abspath(os.path.join(current ,".."))
-#print(core)
 sys.path.append(core)
 
 import Wrapper

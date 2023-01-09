@@ -12,5 +12,4 @@ def import_ema_timber():
         if module_name == "ema_timber":
             _module = loader.find_module(module_name).load_module(module_name)
             globals()[module_name] = _module
-            print(f"Found {module_name} in {core}")
             break

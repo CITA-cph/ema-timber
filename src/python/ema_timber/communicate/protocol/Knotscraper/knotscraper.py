@@ -1,19 +1,10 @@
 # HERE IS WHERE YOU PUT HOW THE FUNCTION INTERACTS WITH OTHER SYSTEMS
 
-# features to be added #
-########################
-# All directory should be implimented here
-# 
-########################
-#                      #
-
 import os
 import sys
 
 current = os.path.dirname(os.path.abspath(__file__))
-#print (current)
 core = os.path.abspath(os.path.join(current ,".."))
-#print(core)
 sys.path.append(core)
 
 import Wrapper
@@ -64,18 +55,23 @@ class Knotscraper():
         I_HOST, I_PORT = self.book[self.re_addr]
         S_HOST, S_PORT = self.book[self.id]
 
+        if len(self.task)> 1:
+            filename = self.task[1]
+        else:
+            date_time =  time.strftime("%y%m%d%H%M%S")
+            filename = date_time
         for c in self.camls:
 
             if c in self.book:
                 c_HOST, c_PORT = self.book[c]
                 print (f"{c} :")
                 res = Wrapper.Client.PING(c_HOST, c_PORT, self.id, S_HOST, S_PORT )
-                date =  time.strftime("%y%m%d")
+                
                 if res:
                     
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
-                        args = [chain, ["takeImg", date]]
+                        args = [chain, ["takeImg", filename]]
                     )
                     Wrapper.Client.clientOut(c_HOST, c_PORT, message)
 
@@ -132,7 +128,7 @@ class Knotscraper():
             Wrapper.Client.clientOut(S_HOST, S_PORT, message)
 
             date =  time.strftime("%y%m%d")
-            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["processImg", date]])
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["processImg", date , filename ]])
             Wrapper.Client.clientOut(S_HOST, S_PORT, message)
             
             print("<takeImg> DONE")
@@ -147,12 +143,13 @@ class Knotscraper():
 
     def processImg(self):
         from . import getData
-        filename = self.task[1]
-        base_dir = os.path.abspath(f"./examples")
+        date = self.task[1]
+        filename = self.task[2]
+        base_dir = os.path.abspath(f"./examples/python")
         T_HOST, T_PORT = self.book[self.re_addr[:-2]]
 
         try:
-            getData.run (base_dir, filename)
+            getData.run (base_dir, date, filename)
             print ("processImg - ok")
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"<processImg> DONE"]])
 
