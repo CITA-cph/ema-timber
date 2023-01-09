@@ -22,7 +22,7 @@ def makeDir(parentpath):
         os.makedirs(parentpath)
 
 date =  time.strftime("%y%m%d")
-base_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
+base_dir = os.path.abspath(f"../ema-timber/examples/python/data/{date}")
 
 class Server(Processor):
 

@@ -7,7 +7,7 @@ from util import import_ema_timber
 import_ema_timber()
 
 date =  time.strftime("%y%m%d")
-save_dir = os.path.abspath(f"../ema-timber/examples/python/{date}")
+save_dir = os.path.abspath(f"../ema-timber/examples/python/data/{date}")
 
 import socket
 import threading

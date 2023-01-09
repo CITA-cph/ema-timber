@@ -139,11 +139,11 @@ class Knotscraper():
         from . import getData
         date = self.task[1]
         filename = self.task[2]
-        base_dir = os.path.abspath(f"./examples/python")
+        base_dir = os.path.abspath(f"./examples/python/")
         T_HOST, T_PORT = self.book[self.re_addr[:-2]]
 
         try:
-            getData.run (base_dir, date, filename)
+            getData.run (base_dir, "data/"+date, filename)
             print ("processImg - ok")
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"<processImg> DONE"]])
 
