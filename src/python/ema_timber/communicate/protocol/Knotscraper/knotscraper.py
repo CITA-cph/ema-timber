@@ -1,13 +1,6 @@
 # HERE IS WHERE YOU PUT HOW THE FUNCTION INTERACTS WITH OTHER SYSTEMS
 
-import os
-import sys
-
-current = os.path.dirname(os.path.abspath(__file__))
-core = os.path.abspath(os.path.join(current ,".."))
-sys.path.append(core)
-
-import Wrapper
+from ema_timber.communicate.protocol import Wrapper
 import time
 
 
@@ -142,6 +135,7 @@ class Knotscraper():
         self.outputB = False
 
     def processImg(self):
+        import os
         from . import getData
         date = self.task[1]
         filename = self.task[2]
