@@ -39,35 +39,23 @@ class Knotscraper():
     def perform(self):
         task = self.task[0]
         
-        match task:
+        programs = {
+            "callCam" : self.callCam,
+            "takeImg" : self.takeImg,
+            "processImg" : self.processImg,
+            "listen": self.listen,
+        }
 
-            case "callCam": # INSTRUCTOR TO SERVER TO CAMERA
-                self.callCam()
-            case "takeImg": # CAMERA
-                self.takeImg()
-            case "processImg": # SERVER
-                self.processImg()
+        if task in programs:
+            programs[task]()
 
-            case "listen": # USED TO PRINT 
-                if len(self.re_addr) > 2:
-                    print (self.task[1])
-                    chain = self.re_addr[:-2]
-                    T_HOST, T_PORT = self.book[chain[-2:]]
-                    message = Wrapper.Package.pack(TASK="Knotscraper", args = [chain,["listen", self.task[1]]])
-                    Wrapper.Client.clientOut(T_HOST, T_PORT, message)
-                else:
-                    print (self.task[1])
-                self.outputA = False
-                self.outputB = False
-            
-            case _:
-
-                T_HOST, T_PORT = self.book[self.re_addr[-2:]]
-                message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[-2:],["listen",f"{self.id} - Command < {task} > not recognized"]])
-                Wrapper.Client.clientOut(T_HOST, T_PORT, message)
-                print (f"Command < {task} > not recognized")
-                self.outputA = False
-                self.outputB = False
+        else:
+            T_HOST, T_PORT = self.book[self.re_addr[-2:]]
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[-2:],["listen",f"{self.id} - Command < {task} > not recognized"]])
+            Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+            print (f"Command < {task} > not recognized")
+            self.outputA = False
+            self.outputB = False
 
     def callCam(self):
 
@@ -177,6 +165,17 @@ class Knotscraper():
         self.outputA = False
         self.outputB = False
 
+    def listen(self):
+        if len(self.re_addr) > 2:
+            print (self.task[1])
+            chain = self.re_addr[:-2]
+            T_HOST, T_PORT = self.book[chain[-2:]]
+            message = Wrapper.Package.pack(TASK="Knotscraper", args = [chain,["listen", self.task[1]]])
+            Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+        else:
+            print (self.task[1])
+        self.outputA = False
+        self.outputB = False
 
     def out (self): # OUPUT OF CLASS
         return self.outputA, self.outputB
