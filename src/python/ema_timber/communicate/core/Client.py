@@ -1,4 +1,17 @@
 # CLIENT CHANNEL
+# THIS MODULE SEND INFORMATION TO THE SERVER
+
+# clientSetup - creates a client server
+# clientOut - sends data to target and closes connection (links to Server.updatePages)
+# PING - tries to send local addr to target
+# sendByteStream - sends a string of bytes (links to Server.recvBytestream)
+# MODS - asks for mod list (links to Server.send_modls)
+
+# FEATURES TO ADD
+#   1. make this a class
+#   2. ALIVE should terminate
+#   3. Client class should inherit threading
+
 
 import socket
 import time 
