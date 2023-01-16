@@ -52,13 +52,12 @@ class Processor():
                         continue
                     if f0 and f0 in self.prgls:
                         self.jobqueue.put([self.prgls[f0],args0])
-                    
+                    else:
+                        self.jobqueue.task_done()
                 except Exception as e:
                     print (e)
                     print (f"error with  {fu}")
 
             except:
                 continue
-
-            else:
-                self.jobqueue.task_done()
+        return

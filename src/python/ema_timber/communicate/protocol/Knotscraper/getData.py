@@ -53,10 +53,8 @@ def run(base_dir, date, filename):
         b.getContours(75,100)
         b.getKeyBlobs(True,True,True,1000,0.1,0.1)
         b.cropKnots()
-        
         # Scan for knots and show
         b.scan(show = False, bounds = True , knots = True , resize = True, s = 0.2)
-
         # Save imgs
         prepFile.writeImgs(b.imgs[1],os.path.join(base_dir,date,post_img), dir= "", id = b.id ) # Save Stitched img
         prepFile.writeImgs(b.imgs[2],os.path.join(base_dir,date,knots_img), dir= b.id, id = b.id ) # Save Knots img

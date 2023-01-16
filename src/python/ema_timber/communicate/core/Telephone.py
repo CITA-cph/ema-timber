@@ -13,12 +13,13 @@ import ema_timber.communicate.protocol as ema_protocol
 
 class Telephone (threading.Thread, Server, Processor, Instructor, Broadcast):
     
-    def __init__ (self,HOST = "127.0.0.1", PORT = 55554, id = "05", TYPE = "SBi" ):
+    def __init__ (self,HOST = "127.0.0.1", PORT = 55554, id = "05", TYPE = "SBi", loc = base_dir ):
         threading.Thread.__init__(self)
         Broadcast.__init__(self)
         Server.__init__(self)
         Processor.__init__(self, self.TASKls, book = self.book)
         Instructor.__init__(self)
+        self.base_dir = loc
         self.HOST = HOST
         self.PORT = PORT
         self.id = id

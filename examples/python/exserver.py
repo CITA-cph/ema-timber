@@ -25,8 +25,8 @@ def main():
     print (f"PORTS : \n\tBroadcasting - 01 : {BROADPORT} \n\tServer - {idserver} : {SERVERPORT}\n")
     #+++++++++++++++++++++++++++++#
 
-    t = Telephone.Telephone(HOST, SERVERPORT, idserver)
-    setattr(t, "no_drones", 5)
+    t = Telephone.Telephone(HOST, SERVERPORT, idserver, loc = save_dir)
+    setattr(t, "no_drones", 2)
     t.start()
 
 

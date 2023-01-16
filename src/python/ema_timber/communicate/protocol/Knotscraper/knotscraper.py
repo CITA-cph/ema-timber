@@ -3,7 +3,10 @@
 from ema_timber.communicate.protocol import Wrapper
 import time
 import math
-
+try:
+    from picamera2 import Picamera2
+except:
+    pass
 #print ("DEEP KNOT")
 
 class Knotscraper():
@@ -51,9 +54,9 @@ class Knotscraper():
         S_HOST, S_PORT = self.book[self.id]
 
         filename = self.task[1]
-        totallen = self.task[2]
-        intv = self.task[3]
-        no_frames = math.ceil(totallen / intv)
+        totallen = float(self.task[2])
+        intv = float(self.task[3])
+        no_frames = int(math.ceil(totallen / intv))
 
         for c in self.camls:
 
@@ -66,7 +69,7 @@ class Knotscraper():
                     
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
-                        args = [chain, ["takeImg", filename, no_frames, intv]]
+                        args = [chain, ["takeImg", filename, str(no_frames), str(intv)]]
                     )
                     self.push.clientOut(c_HOST, c_PORT, message)
 
@@ -93,13 +96,13 @@ class Knotscraper():
         import numpy as np
         S_HOST, S_PORT = self.book[self.re_addr[-2:]]
         filename = self.task[1]
-        no_frames = self.task[2]
-        intv = self.task[3]
+        no_frames = int(self.task[2])
+        intv = float(self.task[3])
         current_loc = 0
 
         try:
 
-            from picamera2 import Picamera2
+            #from picamera2 import Picamera2
             picam2 = Picamera2()
             config = picam2.create_still_configuration(main = {"size": picam2.sensor_resolution})
             picam2.configure(config)
@@ -119,7 +122,8 @@ class Knotscraper():
                 print (raw.shape)
                 self.push.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
                 picam2.stop()
-                print (f"moving to {current_loc + intv}")
+                current_loc += intv
+                print (f"moving to {current_loc}")
             
             picam2.close()
             print ("takeImg - ok | sendImg - ok")
@@ -142,6 +146,7 @@ class Knotscraper():
         self.outputB = False
 
     def processImg(self):
+        
         import os
         from . import getData
         date = self.task[1]
@@ -150,6 +155,7 @@ class Knotscraper():
         T_HOST, T_PORT = self.book[self.re_addr[:-2]]
 
         try:
+            print ("processing images...")
             getData.run (base_dir, "data/"+date, filename)
             print ("processImg - ok")
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"<processImg> DONE"]])
