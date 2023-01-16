@@ -1,60 +1,47 @@
 import os
-import sys
-
-current = os.path.dirname(os.path.abspath(__file__))
-parent = os.path.dirname(current)
-#sys.path.append(parent)
-
 import copy
 import socket
 import time
-
 import numpy as np
-from . import Processor
-import ema_timber.communicate.protocol as ema_protocol
-
-
-def main( HOST, PORT, id, prgls ):
-    s = Server( HOST, PORT, id, prgls)
+from . import  Yellowpages
 
 def makeDir(parentpath):
     if not os.path.exists(parentpath):
         os.makedirs(parentpath)
 
-date =  time.strftime("%y%m%d")
-base_dir = os.path.abspath(f"../ema-timber/examples/python/data/{date}")
-
-class Server(Processor):
-
-    def __init__(self, HOST, PORT, id, prgls = {} , no_drones = 1, addr = base_dir ):
-
-        self.base_dir = addr
-        makeDir(self.base_dir)
-        self.IP  = HOST
+class Server():
+    def __init__(self, HOST = "127.0.0.1", PORT= 55553, ID="898", loc = "HERE", prgls = {}):
+        self.HOST = HOST
         self.PORT = PORT
-        self.id  = id
-        self.prgls = prgls | ema_protocol.modules
-        Processor.__init__(self,id,self.prgls, no_drones = no_drones)
-        self.set_address({self.id:[self.IP, self.PORT]})
-        self.sock = self.socketSetup()
-        if self.sock:
-            self.channel()
-
-    def socketSetup(self):
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.id = ID
+        self.base_dir = loc
+        self.TASKls = []
+        self.prgls = prgls
+        self.book = Yellowpages(self.id)
     
+    def setupServer(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.bind((self.IP, self.PORT))
+            s.bind((self.HOST, self.PORT))
             time.sleep(0.05)
-            print(f"[- {self.id} -] binded to port: {self.IP} {self.PORT}")
+            print(f"[- {self.id} -] binded to port: {self.HOST} {self.PORT}")
             s.listen()
             print(f"[- {self.id} -] is listening" )
             return s
         except:
-            print (f"[- {self.id} -] could not bind to port:{self.IP} {self.PORT}")
+            print (f"[- {self.id} -] could not bind to port:{self.HOST} {self.PORT}")
             return False
 
+    def startServer(self):
+        self.sock = self.setupServer()
+        if self.sock:
+            self.book = Yellowpages(self.id, {self.id : [self.HOST, self.PORT]})
+            self.book.set_address()
+            self.channel()
+        else:
+            print ("Server failed to start")
+        return False
+    
     def recvdata(self, c):
         try:
             data = c.recv(1024)
@@ -65,10 +52,11 @@ class Server(Processor):
             return False
 
     def channel(self):
-        while True:
+        while not self.kill:
             try:
+                self.sock.settimeout(4)
                 c, addr = self.sock.accept()
-                
+                self.sock.settimeout(99)
                 data = self.recvdata(c) # GETTING DATA
                 
                 if data:
@@ -76,6 +64,7 @@ class Server(Processor):
                     if data == b"PING":
                         self.updatePages(c)
                         #print("Terminating :", addr)
+
                         continue
 
                     elif data == b"FILE":
@@ -92,12 +81,16 @@ class Server(Processor):
                     c.recv(1024) # CLOSING
                     print(f'\n[- {self.id} -] - Connected to :', addr)
                     print("Terminating :", addr)
-                    self.postJob(data)
+                    self.TASKls.append(data)
 
+            except socket.timeout:
+                continue
             except Exception as e:
-                c.close()
                 print (e)
                 print("DATA ERROR")
+
+        print ("server -end")
+        return
 
     def updatePages(self, c):
 
@@ -105,11 +98,12 @@ class Server(Processor):
         p_IP = self.recvdata(c).decode()
         p_PORT = int(self.recvdata(c).decode())
         c.recv(1024) # CLOSING
-        p0 = copy.copy(self.address)
-        self.set_address({p_ID:[p_IP, p_PORT]})
-        if p0 != self.address:
+        p0 = copy.copy(self.book.address)
+        self.book.set_address({p_ID:[p_IP, p_PORT]})
+        if p0 != self.book.address:
 
-            print (self.address)
+            print (self.book.address)
+            
 
     def recvBytestream(self,c):
 
@@ -148,13 +142,3 @@ class Server(Processor):
             c.send(k.encode())
             c.recv(1024)
         c.recv(1024) # CLOSING
-
-if __name__ == "__main__":
-    #print(protocol.__all__)
-    #exit()
-    HOSTNAME = socket.gethostname()
-    HOST = socket.gethostbyname(HOSTNAME)
-    PORT = 55556
-    id = "02"
-    ls = {}
-    Server(HOST, PORT, id, ls)

@@ -1,27 +1,43 @@
 import time
-from . import Client
+from .Client import Client
 from . import Package
+
 
 
 class Instructor():
 
-    def __init__(self,T_HOST, T_PORT, id = 99,):
+    def __init__(self, id = "909"):
         self.id = id
-        self.HOST = T_HOST
-        self.PORT = T_PORT
-        r , self.prot = Client.MODS(T_HOST,T_PORT)
-        if not r :
-            print ("Failed to get mod list")
-        self.instruction()
+        self.kill = False
+        self.T_HOST = None
+        self.T_PORT  = None
+        self.out = Client()
 
-    def instruction(self):
-        
-        while True:
+    def setupInstructor(self):
+        r , self.prot = self.out.MODS(self.T_HOST,self.T_PORT)
+        if  not r :
+            print ("Failed to get mod list")
+            print ("Try again when server is running")
+            self.prot = []
+            self.kill = True
+            return False
+        return True
+
+    def startInstructor(self,localcmd):
+        self.setupInstructor()
+        self.showmods()
+        while not self.kill:
             time.sleep(0.2)
-            print ("\n+++++++++++[ PROGRAMS ]+++++++++++")
-            for id,prot in enumerate(self.prot):
-                print (f"{[ id ]} ----- {[prot]}")
-            chosen_prot = input('Func : \t')
+            chosen_prot = input("")
+            if chosen_prot in localcmd:
+                localcmd[chosen_prot]()
+                continue
+            elif chosen_prot == "refresh":
+                self.setupInstructor()
+                continue
+            elif chosen_prot == "show":
+                self.showmods()
+                continue
             try:
                 chosen_prot = int(chosen_prot)
             except:
@@ -40,12 +56,10 @@ class Instructor():
                 continue
             
             message  = Package.pack(TASK = self.prot[chosen_prot], args= args)
-            s = Client.clientOut(self.HOST, self.PORT, message)
+            s = self.out.clientOut(self.T_HOST, self.T_PORT, message)
+        print ("instructor - end")
 
-if __name__ == "__main__":
-
-    import socket
-    HOSTNAME = socket.gethostname()
-    HOST = socket.gethostbyname(HOSTNAME)
-    i = Instructor(HOST, 55556, "99")
-    
+    def showmods(self):
+        print ("\n+++++++++++[ PROGRAMS ]+++++++++++")
+        for id,prot in enumerate(self.prot):
+                print (f"{[ id ]} ----- {[prot]}")

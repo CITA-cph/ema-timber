@@ -10,11 +10,7 @@ date =  time.strftime("%y%m%d")
 save_dir = os.path.abspath(f"../ema-timber/examples/python/data/{date}")
 
 import socket
-import threading
-
-from ema_timber.communicate import protocol
-from ema_timber.communicate.core import Client, Server
-
+from ema_timber.communicate.core import Telephone
 
 def main():
 
@@ -29,26 +25,10 @@ def main():
     print (f"PORTS : \n\tBroadcasting - 01 : {BROADPORT} \n\tServer - {idserver} : {SERVERPORT}\n")
     #+++++++++++++++++++++++++++++#
 
-    threads = []
+    t = Telephone.Telephone(HOST, SERVERPORT, idserver)
+    setattr(t, "no_drones", 5)
+    t.start()
 
-    # SET UP BROADCAST
-    broadcaster = threading.Thread(
-        target = protocol.Broadcast.Broadcast,
-        args = (HOST, BROADPORT,"s",str(SERVERPORT).encode())
-        )
-    
-    broadcaster.start()
-    threads.append(broadcaster)
-
-    S = threading.Thread(
-        target = Server,
-        args = (HOST, SERVERPORT, idserver, {} , 5, save_dir)
-        )
-    S.start()
-    threads.append(S)
-
-    for tt in threads:
-        tt.join()
 
 if __name__ == "__main__":
     main()

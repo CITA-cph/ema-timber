@@ -10,6 +10,7 @@ class Knotscraper():
 
     def __init__(self, args , pages):
         # args = [ retrunaddr ,[task, arguments for task] ] 
+        self.push = Wrapper.Client()
         self.book =  pages
         self.id = list(self.book.keys())[0]
         self.re_addr = args[0]
@@ -18,6 +19,7 @@ class Knotscraper():
         self.outputB = False
         self.camls = ["10"]
         self.perform()
+        
 
 
     def perform(self):
@@ -36,7 +38,7 @@ class Knotscraper():
         else:
             T_HOST, T_PORT = self.book[self.re_addr[-2:]]
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr[-2:],["listen",f"{self.id} - Command < {task} > not recognized"]])
-            Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+            self.push.clientOut(T_HOST, T_PORT, message)
             print (f"Command < {task} > not recognized")
             self.outputA = False
             self.outputB = False
@@ -58,7 +60,7 @@ class Knotscraper():
             if c in self.book:
                 c_HOST, c_PORT = self.book[c]
                 print (f"{c} :")
-                res = Wrapper.Client.PING(c_HOST, c_PORT, self.id, S_HOST, S_PORT )
+                res = self.push.PING(c_HOST, c_PORT, self.id, S_HOST, S_PORT )
                 
                 if res:
                     
@@ -66,23 +68,23 @@ class Knotscraper():
                         TASK= "Knotscraper", 
                         args = [chain, ["takeImg", filename]]
                     )
-                    Wrapper.Client.clientOut(c_HOST, c_PORT, message)
+                    self.push.clientOut(c_HOST, c_PORT, message)
 
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
                         args = [self.id, ["listen", f"Camera {c} has started taking photos"]]
                     )
-                    Wrapper.Client.clientOut(I_HOST, I_PORT, message)
+                    self.push.clientOut(I_HOST, I_PORT, message)
 
                 else:
                     print (f"Could not connect to {c}")
                     message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.id,["listen", f"Could not get a respond from {c}"]])
-                    Wrapper.Client.clientOut(I_HOST, I_PORT, message)
+                    self.push.clientOut(I_HOST, I_PORT, message)
                     print (f"<Knotscraper> -FAILED - Could not get a respond from {c}")
             else:
                 print (f"{c} has not connected to the Server")
                 message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.id,["listen", f"{c} has not connected to the Server"]])
-                Wrapper.Client.clientOut(I_HOST, I_PORT, message)
+                self.push.clientOut(I_HOST, I_PORT, message)
                 print (f"<Knotscraper> -FAILED - {c} has not connected to the Server")
             self.outputA = False
             self.outputB = False
@@ -111,24 +113,24 @@ class Knotscraper():
                 raw_np = np.array(raw).tobytes()
                 print (len(raw_np))
                 print (raw.shape)
-                Wrapper.Client.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
+                self.push.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
                 picam2.stop()
             
             picam2.close()
             print ("takeImg - ok | sendImg - ok")
 
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"{self.id} - takeImg - ok | sendImg - ok"]])
-            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+            self.push.clientOut(S_HOST, S_PORT, message)
 
             date =  time.strftime("%y%m%d")
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["processImg", date , filename ]])
-            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+            self.push.clientOut(S_HOST, S_PORT, message)
             
             print("<takeImg> DONE")
 
         except Exception as e:
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["listen", f"{self.id} - {e}"]])
-            Wrapper.Client.clientOut(S_HOST, S_PORT, message)
+            self.push.clientOut(S_HOST, S_PORT, message)
             print (e)
 
         self.outputA = False
@@ -152,7 +154,7 @@ class Knotscraper():
             print (e)
 
 
-        Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+        self.push.clientOut(T_HOST, T_PORT, message)
         self.outputA = False
         self.outputB = False
 
@@ -162,7 +164,7 @@ class Knotscraper():
             chain = self.re_addr[:-2]
             T_HOST, T_PORT = self.book[chain[-2:]]
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [chain,["listen", self.task[1]]])
-            Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+            self.push.clientOut(T_HOST, T_PORT, message)
         else:
             print (self.task[1])
         self.outputA = False

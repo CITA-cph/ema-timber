@@ -8,7 +8,7 @@ class Yellowpages:
         self.id = id
         self.address = dir
         self.dest = str(id)+"_yellowpages.json"
-        self.updateJson()
+        #self.updateJson()
         
     def set_address(self, dir = {}):
         for a in dir.keys(): 

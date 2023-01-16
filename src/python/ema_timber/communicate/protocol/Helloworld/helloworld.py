@@ -13,6 +13,7 @@ class Helloworld():
         self.re_addr = args[0]
         self.outputA = False
         self.outputB = False
+        self.push = Wrapper.Client()
         if len(args)> 1:
             self.re_othes = args[1]
             self.hello()
@@ -25,11 +26,11 @@ class Helloworld():
             if a in self.book:
                 T_HOST, T_PORT = self.book[a]
                 message = Wrapper.Package.pack("Helloworld", [self.re_addr])
-                Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+                self.push.clientOut(T_HOST, T_PORT, message)
             else:
                 T_HOST, T_PORT = self.book[self.re_addr]
                 message = Wrapper.Package.pack("Helloworld", ["the void"])
-                Wrapper.Client.clientOut(T_HOST, T_PORT, message)
+                self.push.clientOut(T_HOST, T_PORT, message)
                 self.outputA = "Helloworld"
                 self.outputB = ["the void"]
             talk.observe(self.re_addr, a)
