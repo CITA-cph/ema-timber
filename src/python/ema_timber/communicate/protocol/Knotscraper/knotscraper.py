@@ -2,7 +2,7 @@
 
 from ema_timber.communicate.protocol import Wrapper
 import time
-
+import math
 
 #print ("DEEP KNOT")
 
@@ -50,11 +50,11 @@ class Knotscraper():
         I_HOST, I_PORT = self.book[self.re_addr]
         S_HOST, S_PORT = self.book[self.id]
 
-        if len(self.task)> 1:
-            filename = self.task[1]
-        else:
-            date_time =  time.strftime("%y%m%d%H%M%S")
-            filename = date_time
+        filename = self.task[1]
+        totallen = self.task[2]
+        intv = self.task[3]
+        no_frames = math.ceil(totallen / intv)
+
         for c in self.camls:
 
             if c in self.book:
@@ -66,7 +66,7 @@ class Knotscraper():
                     
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
-                        args = [chain, ["takeImg", filename]]
+                        args = [chain, ["takeImg", filename, no_frames, intv]]
                     )
                     self.push.clientOut(c_HOST, c_PORT, message)
 
@@ -93,6 +93,9 @@ class Knotscraper():
         import numpy as np
         S_HOST, S_PORT = self.book[self.re_addr[-2:]]
         filename = self.task[1]
+        no_frames = self.task[2]
+        intv = self.task[3]
+        current_loc = 0
 
         try:
 
@@ -106,7 +109,8 @@ class Knotscraper():
             picam2.stop()
             
             # TAKE IMAGE CODE HERE#
-            for i in range(10):
+            for i in range(no_frames):
+                print (f"Taking {filename} : {i:03}")
                 picam2.start()
                 time.sleep(1)
                 raw = picam2.capture_array("main")
@@ -115,6 +119,7 @@ class Knotscraper():
                 print (raw.shape)
                 self.push.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
                 picam2.stop()
+                print (f"moving to {current_loc + intv}")
             
             picam2.close()
             print ("takeImg - ok | sendImg - ok")
