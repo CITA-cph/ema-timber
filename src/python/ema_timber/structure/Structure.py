@@ -1,5 +1,11 @@
 import networkx as nx
 import json
+from enum import Enum
+
+class NodeType(Enum):
+    Element = 0
+    Joint = 1
+
 
 class Structure():
     def __init__(self, graph=None, name="Structure", attr={}):
@@ -11,7 +17,8 @@ class Structure():
         else:
             self.graph = graph
 
-        self.last_joint_id = 0
+        self.last_element_id = 100000
+        self.last_joint_id = 200000
 
     def write(self, path):
         print(f"Writing to '{path}'...", end='')
@@ -39,6 +46,9 @@ class Structure():
     def __eq__(self, other):
         return nx.utils.misc.graphs_equal(self.graph, other.graph)
 
+    def __str__(self):
+        return f"Structure({self.graph.name}) with {len(self.nodes)} nodes and {len(self.edges)} edges."
+
     @property
     def nodes(self):
         return self.graph.nodes
@@ -55,32 +65,58 @@ class Structure():
 
     def increment_joint_id(self):
         self.last_joint_id += 1
+        return self.last_joint_id
         return f"J{self.last_joint_id:04d}"
+    
+    def increment_element_id(self):
+        self.last_element_id += 1
+        return self.last_element_id
+        return f"E{self.last_element_id:04d}"
 
-    def add_element(self, id, element_data={}):
+    def add_element(self, id=None, data={}):
+        if id is None:
+            id = self.increment_element_id()
+            while id in self.graph.nodes:
+                id = self.increment_element_id()
+
         if id in self.graph.nodes:
             raise ValueError(f"Id '{id}' already exists!")
-        element_data["node_type"] = "element"
-        self.graph.add_nodes_from([(id, element_data)])
+        data["node_type"] = NodeType.Element
+        self.graph.add_nodes_from([(id, data)])
+        return id
 
-    def add_elements(self, ids, element_datas=[]):
-        for (id, element_data) in zip(ids, element_datas):
+    def add_elements(self, ids, datas=[]):
+        new_ids = []
+        for (id, data) in zip(ids, datas):
+            data["node_type"] = NodeType.Element
+            if id is None:
+                id = self.increment_element_id()
+                while id in self.graph.nodes:
+                    id = self.increment_element_id()
             if id in self.graph.nodes:
                 raise ValueError(f"Id '{id}' already exists!")
-            self.graph.add_nodes_from([(id, element_data)])
+            self.graph.add_nodes_from([(id, data)])
+            new_ids.append(id)
+        return new_ids
 
-    def add_joint(self, id, joint_data={}):
+    def add_joint(self, id=None, data={}):
+        if id is None:
+            id = self.increment_element_id()
+            while id in self.graph.nodes:
+                id = self.increment_element_id()            
         if id in self.graph.nodes:
             raise ValueError(f"Id '{id}' already exists!")
-        joint_data["node_type"] = "joint"
-        self.graph.add_nodes_from([(id, joint_data)])
+        data["node_type"] = NodeType.Joint
+        self.graph.add_nodes_from([(id, data)])
 
-    def join(self, element_ids, id=None):
+    def join(self, element_ids=[], id=None, data={}):
         if id is None:
             id = self.increment_joint_id()
             while id in self.graph.nodes:
                 id = self.increment_joint_id()
-        self.add_joint(id, {"joint_valence":f"{len(element_ids)}"})
+        data["joint_valence"] = len(element_ids)
+        self.add_joint(id, data)
+        return id
 
         for element_id in element_ids:
             self.graph.add_edge(element_id, id)
