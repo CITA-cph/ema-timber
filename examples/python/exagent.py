@@ -18,7 +18,7 @@ def main():
     #+++++++++++++++++++++++++++++#
     ID = "10"
     HOSTNAME = socket.gethostname()
-    IP = socket.gethostbyname(HOSTNAME)
+    IP = socket.gethostbyname(HOSTNAME + ".local")
     # If you are using a PI use HOSTNAME + ".local"
     PORT = 55444 #RECIVING DATA AT
     
