@@ -97,10 +97,11 @@ class Server():
         f, args = message["TASK"], message["args"] #PACKAGE UNPACK HERE
         if f in self.prgls:
             try:
-                task = f(args, self.book.address)
+                fu = self.prgls[f]
+                task = fu(args, self.book.address)
             except Exception as e:
                 print (e)
-                print (f"error with  {f}")
+                print (f"error with  {fu}")
         else:
             print(f"{f} not found ")
 

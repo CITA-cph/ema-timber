@@ -55,7 +55,7 @@ class Knotscraper():
         current_loc = 0
 
         try:
-            stepper = ed(0.00001, 23,24,17,25,27)
+            stepper = ed(0.00001,18, 23,24,17,25,27)
             stepper.enable()
             stepper.set_direction(True) # cw = T ccw = F
 
@@ -92,7 +92,7 @@ class Knotscraper():
             
             print ("reseting camera")
             stepper.set_direction(False)
-            stepper.step(intv)
+            stepper.step(intv*no_frames)
             stepper.disable()
             stepper.finish()
             
