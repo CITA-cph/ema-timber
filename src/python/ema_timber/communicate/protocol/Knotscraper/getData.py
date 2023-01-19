@@ -22,8 +22,6 @@ def run(base_dir, date, filename):
 
     #-+-+-+-+-+-#
 
-    Board_ls = [] # List of Boards
-
     np_array_paths = os.path.join(base_dir, date, np_array+"/"+filename)
     imgs = ni.makeImgs(np_array_paths)
     prepFile.writeImgs(imgs,os.path.join(base_dir,date,raw_img), dir= filename , id = filename )
@@ -36,32 +34,37 @@ def run(base_dir, date, filename):
 
     a = Board.Board(filename, imgs, "RAW")
     print ("{} - created".format(filename))
-    Board_ls.append(a)
-
-    for b in Board_ls: # Fix and Stitch IMG
         
-        try:
-            stitch = editImg.fix_img(b.imgs[0] , mtx, dist, trans, cropls)
-            b.imgs.append(stitch)
-            b.status = "STITCHED"
-            print ("{} - {}".format(b.id, b.status))
-        except:
-            print("{}.png could not be created".format(b.id))
-        
-        # Prepare image
-        b.contrastImg(2.2, (45,15))
-        b.getContours(75,100)
-        b.getKeyBlobs(True,True,True,1000,0.1,0.1)
-        b.cropKnots()
-        # Scan for knots and show
-        b.scan(show = False, bounds = True , knots = True , resize = True, s = 0.2)
-        # Save imgs
-        prepFile.writeImgs(b.imgs[1],os.path.join(base_dir,date,post_img), dir= "", id = b.id ) # Save Stitched img
-        prepFile.writeImgs(b.imgs[2],os.path.join(base_dir,date,knots_img), dir= b.id, id = b.id ) # Save Knots img
-        prepFile.writeImgs(b.imgs[3],os.path.join(base_dir,date,looked_img), dir= "", id = b.id ) # Save Scanned img
+    try:
+        stitch = editImg.fix_img(a.imgs[0] , mtx, dist, trans, cropls)
+        a.imgs.append(stitch)
+        a.status = "STITCHED"
+        print ("{} - {}".format(a.id, a.status))
+    except:
+        print("{}.png could not be created".format(a.id))
+    
+    # Prepare image
+    print ("1")
+    a.contrastImg(2.2, (45,15))
+    print ("2")
+    a.getContours(150,250)
+    print ("3")
+    a.getKeyBlobs(True,True,True,1000,0.1,0.1)
+    print ("4")
+    a.cropKnots()
+    print ("5")
+    # Scan for knots and show
+    a.scan(show = False, bounds = True , knots = True , resize = True, s = 0.2)
+    print ("6")
+    # Save imgs
+    prepFile.writeImgs(a.imgs[1],os.path.join(base_dir,date,post_img), dir= "", id = a.id ) # Save Stitched img
+    prepFile.writeImgs(a.imgs[3],os.path.join(base_dir,date,knots_img), dir= a.id, id = a.id ) # Save Knots img
+    prepFile.writeImgs(a.imgs[4],os.path.join(base_dir,date,looked_img), dir= "", id = a.id ) # Save Scanned img
 
-        # Save TXT
-        prepFile.datatoTxt(b.knots[1], os.path.join(base_dir,date,knots_pos), dir= "", id = b.id, extra = "_kpos") # Save Knots pos to Txt
-        prepFile.datatoTxt(b.bound[1], os.path.join(base_dir,date,bound_pos), dir= "", id = b.id, extra = "_bpos") # Save Bounds pos to Txt
+    # Save TXT
+    prepFile.datatoTxt(a.knots[1], os.path.join(base_dir,date,knots_pos), dir= "", id = a.id, extra = "_kpos") # Save Knots pos to Txt
+    prepFile.datatoTxt(a.bound[1], os.path.join(base_dir,date,bound_pos), dir= "", id = a.id, extra = "_bpos") # Save Bounds pos to Txt
+    
+    return
 
     

@@ -168,7 +168,8 @@ class Knotscraper():
         self.push.clientOut(T_HOST, T_PORT, message)
         self.outputA = False
         self.outputB = False
-
+        return 
+        
     def listen(self):
         if len(self.re_addr) > 2:
             print (self.task[1])
