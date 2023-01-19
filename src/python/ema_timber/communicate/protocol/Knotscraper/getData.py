@@ -44,18 +44,12 @@ def run(base_dir, date, filename):
         print("{}.png could not be created".format(a.id))
     
     # Prepare image
-    print ("1")
     a.contrastImg(2.2, (45,15))
-    print ("2")
     a.getContours(150,250)
-    print ("3")
     a.getKeyBlobs(True,True,True,1000,0.1,0.1)
-    print ("4")
     a.cropKnots()
-    print ("5")
     # Scan for knots and show
     a.scan(show = False, bounds = True , knots = True , resize = True, s = 0.2)
-    print ("6")
     # Save imgs
     prepFile.writeImgs(a.imgs[1],os.path.join(base_dir,date,post_img), dir= "", id = a.id ) # Save Stitched img
     prepFile.writeImgs(a.imgs[3],os.path.join(base_dir,date,knots_img), dir= a.id, id = a.id ) # Save Knots img
