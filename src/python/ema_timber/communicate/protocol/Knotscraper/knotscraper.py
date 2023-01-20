@@ -50,8 +50,9 @@ class Knotscraper():
         
         S_HOST, S_PORT = self.book[self.re_addr[-2:]]
         filename = self.task[1]
-        no_frames = int(self.task[2])
-        intv = math.floor(int(float(self.task[3])))
+        totalLen = int(self.task[2])
+        intv = 800 
+        no_frames = math.ceil(totalLen/intv)
         current_loc = 0
 
         try:

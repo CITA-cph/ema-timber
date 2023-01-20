@@ -2,7 +2,7 @@ try:
     import RPi.GPIO as gpio
 except:
     pass
-import time, sys
+import time, sys, math
 
 
 class easydriver(object):
@@ -39,10 +39,14 @@ class easydriver(object):
         gpio.setup(self.pin_enable, gpio.OUT)
         gpio.output(self.pin_enable,False)
        
-
-
-    def step(self, no_steps):
+        self.s_angle = 1.8
+        self.pitch = 2
+        self.n_threads = 4
         
+    def step(self, intv):
+        
+        no_steps = math.floor( (intv * (360/self.s_angle) ) / (self.pitch * self.n_threads) )
+
         for s in range ( no_steps ):
             gpio.output(self.pin_step,True)
             time.sleep(self.delay)
