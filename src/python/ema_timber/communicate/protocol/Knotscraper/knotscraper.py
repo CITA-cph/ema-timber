@@ -54,9 +54,7 @@ class Knotscraper():
         S_HOST, S_PORT = self.book[self.id]
 
         filename = self.task[1]
-        totallen = float(self.task[2])
-        intv = float(self.task[3])
-        no_frames = int(math.ceil(totallen / intv))
+        totallen = self.task[2]
 
         for c in self.camls:
 
@@ -69,7 +67,7 @@ class Knotscraper():
                     
                     message = Wrapper.Package.pack (
                         TASK= "Knotscraper", 
-                        args = [chain, ["takeImg", filename, str(no_frames), str(intv)]]
+                        args = [chain, ["takeImg", filename, str(totallen)]]
                     )
                     self.push.clientOut(c_HOST, c_PORT, message)
 
