@@ -19,7 +19,7 @@ class Board:
         cl = clahe.apply(l_channel)
         limg = cv2.merge((cl,a,b))
         img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-        self.imgs[1] = img
+        self.imgs.append(img)
 
     def getContoursPos(self):
         c = self.bound[0]
@@ -31,7 +31,7 @@ class Board:
 
     def getContours(self,lower = 50, upper = 150):
 
-        img = self.imgs[1]
+        img = self.imgs[2]
         img2 = img.copy()
         imggray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
         ret, thresh = cv2.threshold(imggray, lower, upper, 0)
@@ -43,6 +43,7 @@ class Board:
         
         self.bound.append(sorted_contours[0])
         self.getContoursPos()
+        
 
     def getKeypointPos(self):
         kp = self.knots[0]
@@ -57,7 +58,7 @@ class Board:
 
     def getKeyBlobs(self, filterByArea = False,filterByConvexity = False,filterByInertia = False,minArea =100,minConvexity = 0.1,minInertiaRatio = 0.1):
     
-        img = self.imgs[1]
+        img = self.imgs[2]
         gray_img = cv2.cvtColor(img , cv2.COLOR_BGR2GRAY)
         Gaussian = cv2.GaussianBlur(gray_img, (45,15), 0) # CHANGE THIS VALUE IF NEEDED
         params = cv2.SimpleBlobDetector_Params()
