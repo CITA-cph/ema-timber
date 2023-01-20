@@ -22,7 +22,7 @@ class Knotscraper():
         self.task = args[1]
         self.outputA = False
         self.outputB = False
-        self.camls = ["10"]
+        self.camls = ["10",]
         self.perform()
         
 
@@ -100,7 +100,7 @@ class Knotscraper():
         S_HOST, S_PORT = self.book[self.re_addr[-2:]]
         filename = self.task[1]
         totalLen = float(self.task[2])
-        intv = 800 
+        intv = 100 
         no_frames = math.ceil(totalLen/intv)
         current_loc = 0
 
