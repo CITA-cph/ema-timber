@@ -4,7 +4,7 @@ import socket
 import time
 import numpy as np
 from . import  Yellowpages
-
+from . import Package
 def makeDir(parentpath):
     if not os.path.exists(parentpath):
         os.makedirs(parentpath)
@@ -81,10 +81,11 @@ class Server():
                     c.recv(1024) # CLOSING
                     print(f'\n[- {self.id} -] - Connected to :', addr)
                     print("Terminating :", addr)
+                    
                     if s_type == "S":
                         self.TASKls.append(data)
-                    elif s_type == "s":
-                        pass
+                    elif s_type == "s":  
+                        self.onlyjob(data)
 
             except socket.timeout:
                 continue
@@ -94,6 +95,21 @@ class Server():
         
         print ("server -end")
         return
+
+    def onlyjob(self, job):
+        message  = Package.unpack(job)
+        f, args = message["TASK"], message["args"] #PACKAGE UNPACK HERE
+        if f in self.prgls:
+            try:
+                fu = self.prgls[f]
+                task = fu(args, self.book.address)
+            except Exception as e:
+                print (e)
+                print (f"error with  {fu}")
+        else:
+            print(f"{f} not found ")
+
+
 
     def updatePages(self, c):
 

@@ -3,8 +3,10 @@
 from ema_timber.communicate.protocol import Wrapper
 import time
 import math
+import numpy as np
 try:
     from picamera2 import Picamera2
+    from .Easydriver import easydriver as ed
 except:
     pass
 #print ("DEEP KNOT")
@@ -20,7 +22,6 @@ class Knotscraper():
         self.task = args[1]
         self.outputA = False
         self.outputB = False
-        self.camls = ["10"]
         self.perform()
         
 
@@ -29,9 +30,7 @@ class Knotscraper():
         task = self.task[0]
         
         programs = {
-            "callCam" : self.callCam,
             "takeImg" : self.takeImg,
-            "processImg" : self.processImg,
             "listen": self.listen,
         }
 
@@ -91,35 +90,38 @@ class Knotscraper():
             self.outputB = False
     
     def takeImg(self):
-        import numpy as np
+
+        
         S_HOST, S_PORT = self.book[self.re_addr[-2:]]
         filename = self.task[1]
-        no_frames = int(self.task[2])
-        intv = float(self.task[3])
+        totalLen = float(self.task[2])
+        intv = 800 
+        no_frames = math.ceil(totalLen/intv)
         current_loc = 0
 
         try:
+            stepper = ed(0.00001,18, 23,24,17,25,27)
+            stepper.enable()
+            stepper.set_direction(True) # cw = T ccw = F
 
-            #from picamera2 import Picamera2
+
             picam2 = Picamera2()
             config = picam2.create_still_configuration(main = {"size": picam2.sensor_resolution})
             picam2.configure(config)
 
             picam2.start()
-            time.sleep(2)
-            picam2.stop()
+            time.sleep(2) # Warmup camera
             
             # TAKE IMAGE CODE HERE#
             for i in range(no_frames):
                 print (f"Taking {filename} : {i:03}")
-                picam2.start()
+                stepper.step(intv)
                 time.sleep(1)
                 raw = picam2.capture_array("main")
                 raw_np = np.array(raw).tobytes()
                 print (len(raw_np))
                 print (raw.shape)
                 self.push.sendByteStream(S_HOST, S_PORT, raw_np, f"np_array/{filename}/{i:03}")
-                picam2.stop()
                 current_loc += intv
                 print (f"moving to {current_loc}")
             
@@ -133,6 +135,12 @@ class Knotscraper():
             message = Wrapper.Package.pack(TASK="Knotscraper", args = [self.re_addr,["processImg", date , filename ]])
             self.push.clientOut(S_HOST, S_PORT, message)
             
+            print ("reseting camera")
+            stepper.set_direction(False)
+            stepper.step(intv*no_frames)
+            stepper.disable()
+            stepper.finish()
+            
             print("<takeImg> DONE")
 
         except Exception as e:
@@ -142,6 +150,7 @@ class Knotscraper():
 
         self.outputA = False
         self.outputB = False
+
 
     def processImg(self):
         
