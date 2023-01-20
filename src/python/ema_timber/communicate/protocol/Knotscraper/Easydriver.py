@@ -45,7 +45,7 @@ class easydriver(object):
         
     def step(self, intv):
         
-        no_steps = math.floor( (intv * (360/self.s_angle) ) / (self.pitch * self.n_threads) )
+        no_steps = math.floor( (intv * (360/self.s_angle) ) / (self.pitch * self.n_threads) * 16)
 
         for s in range ( no_steps ):
             gpio.output(self.pin_step,True)

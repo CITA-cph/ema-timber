@@ -17,7 +17,7 @@ class Telephone (threading.Thread, Server, Processor, Instructor, Broadcast):
         threading.Thread.__init__(self)
         Broadcast.__init__(self)
         Server.__init__(self)
-        #Processor.__init__(self, self.TASKls, book = self.book)
+        Processor.__init__(self, self.TASKls, book = self.book)
         Instructor.__init__(self)
         self.base_dir = loc
         self.HOST = HOST

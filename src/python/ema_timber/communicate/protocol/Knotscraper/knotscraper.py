@@ -22,6 +22,7 @@ class Knotscraper():
         self.task = args[1]
         self.outputA = False
         self.outputB = False
+        self.camls = ["10"]
         self.perform()
         
 
@@ -30,8 +31,12 @@ class Knotscraper():
         task = self.task[0]
         
         programs = {
+
+            "callCam" : self.callCam,
             "takeImg" : self.takeImg,
+            "processImg": self.processImg,
             "listen": self.listen,
+
         }
 
         if task in programs:
@@ -150,7 +155,6 @@ class Knotscraper():
 
         self.outputA = False
         self.outputB = False
-
 
     def processImg(self):
         

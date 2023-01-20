@@ -26,7 +26,7 @@ def main():
     print (f"PORTS : \n\tReceiving - {ID} : {PORT}\n")
     #+++++++++++++++++++++++++++++#
 
-    t = Telephone.Telephone(IP, PORT, ID, "Sbi")
+    t = Telephone.Telephone(IP, PORT, ID, "sbi")
     t.start()
 
 if __name__=="__main__":
