@@ -18,7 +18,7 @@ def run(base_dir, date, filename):
     mtx = editImg.getmtx(os.path.join( base_dir , camera_config, "calibmatrix.txt"))
     dist = editImg.getdist(os.path.join(base_dir , camera_config, "dist.txt"))
     trans = 0 # goes to camera_config
-    cropls = [(378, 0), (882, 2404)] # goes to camera_config
+    cropls = [(0, 0), (1008, 2594)] # goes to camera_config
 
     #-+-+-+-+-+-#
 
