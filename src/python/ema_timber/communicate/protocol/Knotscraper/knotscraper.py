@@ -54,7 +54,7 @@ class Knotscraper():
         S_HOST, S_PORT = self.book[self.id]
 
         filename = self.task[1]
-        totallen = self.task[2]
+        totallen = float(self.task[2])
 
         for c in self.camls:
 
