@@ -32,15 +32,14 @@ def corDist(img, mtx, dist):
     # crop the image
     x, y, w, h = roi
     cropped = uncropped[y:y+h, x:x+w]
-
     return cropped
 
 def cropimg(img, pt_ls):
-
     top_l = pt_ls[0]
     bot_r = pt_ls[1]
     img2 = img.copy()
     img2 = img2[top_l[0]:bot_r[0],top_l[1]:bot_r[1],]
+    
     return img2
 
 def stitch(img,img2):
@@ -50,21 +49,23 @@ def stitch(img,img2):
 
 def fix_img (img_ls, mtx , dist, trans, cropls):
     new_ls = []
-    for i in range(len(img_ls)):
-        trans_m = np.array([[1,0,trans*i*-1],[0,1,0]]).astype("float32") #Move +ve Y
-        dist_fix = corDist(img_ls[i], mtx, dist)
-        
-        if i == 0:
-            cropped = cropimg(dist_fix, [(0,0),cropls[1]])
+    try:
+        for i in range(len(img_ls)):
+            trans_m = np.array([[1,0,trans*i*-1],[0,1,0]]).astype("float32") #Move +ve Y
+            dist_fix = corDist(img_ls[i], mtx, dist)
             
-        else:
-            cropped = cropimg(dist_fix, cropls)
+            if i == 0:
+                cropped = cropimg(dist_fix, [(0,cropls[0][1]),cropls[1]])
+                
+            else:
+                cropped = cropimg(dist_fix, cropls)
 
-        translated = cv2.warpAffine(cropped,trans_m,(cropped.shape[1], cropped.shape[0]))
-        new_ls.append(translated)
-    stitched = new_ls[0]
-    
-    for j in range(1,len(new_ls)):
-        stitched = stitch(stitched,new_ls[j])
-    
+            translated = cv2.warpAffine(cropped,trans_m,(cropped.shape[1], cropped.shape[0]))
+            new_ls.append(translated)
+        stitched = new_ls[0]
+        
+        for j in range(1,len(new_ls)):
+            stitched = stitch(stitched,new_ls[j])
+    except Exception as e:
+        print (e)
     return stitched
