@@ -101,7 +101,7 @@ class Knotscraper():
         filename = self.task[1]
         totalLen = float(self.task[2])
         intv = 100 
-        no_frames = math.ceil(totalLen/intv)
+        no_frames = math.ceil(totalLen/intv) + 1
         current_loc = 0
 
         try:

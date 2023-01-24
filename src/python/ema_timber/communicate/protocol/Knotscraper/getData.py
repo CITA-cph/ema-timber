@@ -19,7 +19,7 @@ def run(base_dir, date, filename):
     dist = editImg.getdist(os.path.join(base_dir , camera_config, "dist.txt"))
     trans = 0 # goes to camera_config
     # goes to camera_config # 10mm = 48px # uncropped =  1944,2592 # cropped = 1570, 1820
-    cropls = [(480, 420), (984, 1400)]
+    cropls = [(480, 440), (979, 1380)]
     #-+-+-+-+-+-#
 
     np_array_paths = os.path.join(base_dir, date, np_array+"/"+filename)
@@ -45,7 +45,7 @@ def run(base_dir, date, filename):
     
     # Prepare image
     a.contrastImg(2.2, (45,15))
-    a.getContours(150,250)
+    a.getContours(75,150)
     a.getKeyBlobs(True,True,True,1000,0.1,0.1)
     a.cropKnots()
     # Scan for knots and show
