@@ -11,7 +11,6 @@ def main():
 
     date =  time.strftime("%y%m%d")
     save_dir = os.path.abspath("./data/"+ date)
-    print (save_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
