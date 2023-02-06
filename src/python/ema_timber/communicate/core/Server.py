@@ -4,7 +4,7 @@ import socket
 import time
 import numpy as np
 from . import  Yellowpages
-
+from . import Package
 def makeDir(parentpath):
     if not os.path.exists(parentpath):
         os.makedirs(parentpath)
@@ -32,12 +32,12 @@ class Server():
             print (f"[- {self.id} -] could not bind to port:{self.HOST} {self.PORT}")
             return False
 
-    def startServer(self):
+    def startServer(self, s_type = "S"):
         self.sock = self.setupServer()
         if self.sock:
             self.book = Yellowpages(self.id, {self.id : [self.HOST, self.PORT]})
             self.book.set_address()
-            self.channel()
+            self.channel(s_type)
         else:
             print ("Server failed to start")
         return False
@@ -51,7 +51,7 @@ class Server():
             print("Could not receive data")
             return False
 
-    def channel(self):
+    def channel(self, s_type):
         while not self.kill:
             try:
                 self.sock.settimeout(4)
@@ -81,16 +81,35 @@ class Server():
                     c.recv(1024) # CLOSING
                     print(f'\n[- {self.id} -] - Connected to :', addr)
                     print("Terminating :", addr)
-                    self.TASKls.append(data)
+                    
+                    if s_type == "S":
+                        self.TASKls.append(data)
+                    elif s_type == "s":  
+                        self.onlyjob(data)
 
             except socket.timeout:
                 continue
             except Exception as e:
                 print (e)
                 print("DATA ERROR")
-
+        
         print ("server -end")
         return
+
+    def onlyjob(self, job):
+        message  = Package.unpack(job)
+        f, args = message["TASK"], message["args"] #PACKAGE UNPACK HERE
+        if f in self.prgls:
+            try:
+                fu = self.prgls[f]
+                task = fu(args, self.book.address)
+            except Exception as e:
+                print (e)
+                print (f"error with  {fu}")
+        else:
+            print(f"{f} not found ")
+
+
 
     def updatePages(self, c):
 

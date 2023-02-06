@@ -29,17 +29,17 @@ class Telephone (threading.Thread, Server, Processor, Instructor, Broadcast):
         self.promptls = {"kill": self.killall, "about": self.about, "jobs": self.jobs, "book": self.addressbook
         , "mods":self.mods }
         
-        ########
-        
-        
-    
     def run (self):
         for t in self.TYPE:
             if t == "S":
-                server_thread = threading.Thread(target=self.startServer)
+                server_thread = threading.Thread(target=self.startServer, args = ("S",))
                 server_thread.start()
+
                 processor_thread = threading.Thread(target= self.startProcessor)
                 processor_thread.start()
+            elif t == "s":
+                server_thread = threading.Thread(target=self.startServer, args = ("s",))
+                server_thread.start()
             elif t == "B":
                 broadcast_thread = threading.Thread(target=self.startBroadcast, args=("B", str(self.PORT).encode()))
                 broadcast_thread.start()
@@ -57,7 +57,7 @@ class Telephone (threading.Thread, Server, Processor, Instructor, Broadcast):
 
             
     
-    def localcmd(self): # MAKE THIS A DICT
+    def localcmd(self):
         
         while not self.kill: 
             prompt = input("")
