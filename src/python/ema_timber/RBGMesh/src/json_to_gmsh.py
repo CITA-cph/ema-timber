@@ -4,7 +4,7 @@ import os
 import gmsh
 
 def main():
-
+    
     date =  time.strftime("%y%m%d")
     file_dir = os.path.abspath("./example/data/"+ date)
     file_name = "model.json"
@@ -18,7 +18,6 @@ def main():
     gmsh.option.setNumber("Mesh.MeshSizeMin",4)
     lc = 48
     volumes = []
-
     for _b in data.keys():
         print (f"Brep {_b}:")
         no_vtx = len(data[_b]["vtx"].keys())
@@ -42,7 +41,7 @@ def main():
         except:
             pass
 
-    if len(data.keys()) > 2 :
+    if len(data.keys()) > 1 :
         try:
             bu, buu = gmsh.model.occ.fuse([(3, volumes[0])] , [(3, _t) for _t in volumes[1:]], removeObject= False, removeTool= False)
             bs, bss = gmsh.model.occ.fragment([(3,bu[0][1])], [(3, _t) for _t in volumes])
