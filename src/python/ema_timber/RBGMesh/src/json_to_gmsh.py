@@ -6,7 +6,7 @@ import gmsh
 def main():
 
     date =  time.strftime("%y%m%d")
-    file_dir = os.path.abspath("./data/"+ date)
+    file_dir = os.path.abspath("./example/data/"+ date)
     file_name = "model.json"
     f = open(os.path.join(file_dir, file_name))
     with open(os.path.join(file_dir, file_name), "r") as json_f:
@@ -18,6 +18,7 @@ def main():
     gmsh.option.setNumber("Mesh.MeshSizeMin",4)
     lc = 48
     volumes = []
+
     for _b in data.keys():
         print (f"Brep {_b}:")
         no_vtx = len(data[_b]["vtx"].keys())
@@ -41,19 +42,21 @@ def main():
         except:
             pass
 
-    try:
-        bu, buu = gmsh.model.occ.fuse([(3, volumes[0])] , [(3, _t) for _t in volumes[1:]], removeObject= False, removeTool= False)
-        bs, bss = gmsh.model.occ.fragment([(3,bu[0][1])], [(3, _t) for _t in volumes])
-    except:
-        pass
+    if len(data.keys()) > 2 :
+        try:
+            bu, buu = gmsh.model.occ.fuse([(3, volumes[0])] , [(3, _t) for _t in volumes[1:]], removeObject= False, removeTool= False)
+            bs, bss = gmsh.model.occ.fragment([(3,bu[0][1])], [(3, _t) for _t in volumes])
+        except:
+            pass
 
-    gmsh.model.occ.synchronize()
-    for frag in bs:
-        gmsh.model.addPhysicalGroup(3, [frag[1]])
+        gmsh.model.occ.synchronize()
+        for frag in bs:
+            gmsh.model.addPhysicalGroup(3, [frag[1]])
 
     gmsh.model.occ.synchronize()
     gmsh.model.mesh.generate(3)
-    gmsh.write(f"data/{date}/{file_name[:-5]}.msh")
+    save_dir = os.path.join(file_dir, f"{file_name[:-5]}.msh")
+    gmsh.write(save_dir)
 
 def setPt(v_dic, lc):
     pt_id  = []
