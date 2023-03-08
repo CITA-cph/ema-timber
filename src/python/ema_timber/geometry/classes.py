@@ -49,7 +49,7 @@ def assemble_log_data(cone_path, pith_path):
     with open(cone_path, "r") as file:
         for line in file:
             tok = line.split(',')
-            k = Knot(id=f"knot {counter:02d}", start=(float(tok[0]), float(tok[1]), float(tok[2])),
+            k = Knot(id=f"knot_{counter:02d}", start=(float(tok[0]), float(tok[1]), float(tok[2])),
                 direction=(float(tok[3]), float(tok[4]), float(tok[5])),
                 radius=float(tok[6]))
             knots.append(k)

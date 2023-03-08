@@ -3,11 +3,14 @@ import math
 import logging
 import struct
 
+
 try:
     from .classes import Board, Log
+    from .util import *
 except:
     print("Defaulting to direct import...")
     from classes import Board, Log
+    from util import *
 
 class BoardGenerator():
     def __init__(self, board, log, element_order = 2):
@@ -22,12 +25,18 @@ class BoardGenerator():
 
         gmsh.model.add("BoardGenerator")
 
-        pos = self.board.basePlane.origin
+        pl = self.board.basePlane
+        zaxis = cross(pl.xaxis, pl.yaxis)
+        matrix = [*pl.xaxis, pl.origin[0], *pl.yaxis, pl.origin[1], *zaxis, pl.origin[2]]
+        logging.debug(f"matrix: {matrix}")
+
         dims = self.board.dimensions
-        logging.debug(f"pos {pos}")
+        logging.debug(f"pos {pl.origin}")
         logging.debug(f"dims {dims}")
 
-        board_id = (3, gmsh.model.occ.addBox(pos[0], pos[1], pos[2], dims[0], dims[1], dims[2]))
+        board_id = (3, gmsh.model.occ.addBox(0, 0, 0, dims[0], dims[1], dims[2]))
+        gmsh.model.occ.affine_transform([board_id], matrix)
+
         logging.debug(f"board_id {board_id}")
 
         knot_ids = []
@@ -62,27 +71,42 @@ class BoardGenerator():
 
         trimmed_knot_names = []
 
+        knot_map = {}
+
         for i in range(N):
             if len(tk_map[i]) < 1:
                 continue
             logging.debug(f"    tk_map {i} : {tk_map[i]}")
             logging.debug(f"        dim {tk_map[i][0][0]}")
             logging.debug(f"        id  {[x[1] for x in tk_map[i]]}")
-            gmsh.model.add_physical_group(tk_map[i][0][0], [x[1] for x in tk_map[i]], name=self.log.knots[i].id)
+
+            for x in tk_map[i]:
+                key = self.log.knots[i].id
+                if key not in knot_map.keys():
+                    knot_map[key] = []
+                knot_map[key].append(x[1])
+
+        gmsh.model.occ.synchronize()
 
         logging.debug(f"trimmed board {trimmed_board}")
         logging.debug(f"        dim  {trimmed_board[0][0][0]}")
         logging.debug(f"        tags {trimmed_board[0][0][1]}")
 
-        gmsh.model.add_physical_group(trimmed_board[0][0][0], [trimmed_board[0][0][1]], name=self.board.id)
-
-
         fragmented_board = gmsh.model.occ.fragment(trimmed_knots[0], trimmed_board[0])[0]
 
         gmsh.model.occ.synchronize()
+        gmsh.model.add_physical_group(trimmed_board[0][0][0], [trimmed_board[0][0][1]], name=self.board.id)
+        gmsh.model.set_entity_name(trimmed_board[0][0][0], trimmed_board[0][0][1], name=self.board.id)
 
-        #gmsh.model.add_physical_group(3, [x[1] for x in b0[0]], name="B00")
+        assert trimmed_board[0][0][1] == 1
+        assert trimmed_board[0][0][0] == 3
 
+        for knot_name in knot_map.keys():
+            gmsh.model.occ.synchronize()
+            gmsh.model.add_physical_group(3, knot_map[knot_name], name=knot_name)
+            logging.debug(f"{knot_map[knot_name]}")
+            for tag in knot_map[knot_name]:
+                gmsh.model.set_entity_name(3, tag, knot_name)
 
         return trimmed_board[0], trimmed_knots[0]
 
@@ -91,14 +115,23 @@ class BoardGenerator():
 
         if self.element_order == 2:
             self.tetraType = 11
-        gmsh.option.set_number('Mesh.StlOneSolidPerSurface', 2)
-        gmsh.option.set_number("Mesh.MeshSizeMin", 3)
+        gmsh.option.set_number('Mesh.StlOneSolidPerSurface', 0)
+        gmsh.option.set_number('Mesh.MeshSizeFromCurvature', 12)
+        gmsh.option.set_number("Mesh.MeshSizeMin", 1)
         gmsh.option.set_number("Mesh.MeshSizeMax", 50)
         gmsh.option.set_number("Mesh.ElementOrder", self.element_order)
-        gmsh.option.set_number("Mesh.SaveAll", 1)
+        gmsh.option.set_number("Mesh.SaveAll", 0)
         gmsh.model.occ.synchronize()
 
         gmsh.model.mesh.generate(3)
+
+    def generate_3d_entities(self):
+        entities3d = gmsh.model.get_entities(3)
+
+        for e3d in entities3d:
+            logging.debug(f"    e3d {e3d}")
+
+        gmsh.model.add_physical_group(3, [e[1] for e in entities3d], name="Volumes")
 
     def generate_2d_entities(self):
         entities2d = gmsh.model.get_entities(2)
@@ -106,12 +139,15 @@ class BoardGenerator():
         for e2d in entities2d:
             logging.debug(f"    e2d {e2d}")
 
-        gmsh.model.addPhysicalGroup(2, [e[1] for e in entities2d], name="Shell")
+        gmsh.model.add_physical_group(2, [e[1] for e in entities2d], name="Surfaces")
 
-    def write_integration_points(self, filepath, binary=False):
+    def write_integration_points(self, filepath, binary=False, element_order = -1):
+
         # Get all element types in model    
         elementTypes = gmsh.model.mesh.getElementTypes()
         logging.debug(f"elementTypes {elementTypes}, {len(elementTypes)}")
+        if element_order < 1:
+            element_order = self.element_order
 
         # Element types:
         # 1  : 2-node line
@@ -128,7 +164,7 @@ class BoardGenerator():
 
         # Local coordinates and weights of integration points for element type
         localCoords, weights =\
-            gmsh.model.mesh.getIntegrationPoints(self.tetraType, "Gauss" + str(self.element_order))
+            gmsh.model.mesh.getIntegrationPoints(self.tetraType, "Gauss" + str(element_order))
         logging.debug(f"localCoords {localCoords}")
 
         # Get all 3d elements
@@ -189,15 +225,34 @@ def main():
 
     bg = BoardGenerator(board_data, log_data)
     bg.generate_model()
-    bg.generate_2d_entities()
 
+    gmsh.option.setNumber("General.Terminal",0)
+    #bg.generate_2d_entities()
+    #bg.generate_3d_entities()
+
+    gmsh.model.occ.remove(gmsh.model.occ.get_entities(0))
+    gmsh.model.occ.remove(gmsh.model.occ.get_entities(1))
+    #gmsh.model.occ.remove(gmsh.model.occ.get_entities(2))
+    gmsh.model.occ.synchronize()
+
+    pgroups = gmsh.model.get_physical_groups()
+
+    # Check what the physical groups are
+    print("Physical groups:")
+    for group in pgroups:
+        gname = gmsh.model.get_physical_name(group[0], group[1])
+        print(f"    {group} : {gname}")
+
+    # Write geometry .STP for CAD
     gmsh.write("sample_brep.stp")
     bg.mesh_model()
 
+    # Write integration points (binary and ASCII)
     bg.write_integration_points("sample_integration_points.bin", binary=True)
-    bg.write_integration_points("sample_integration_points.xyz", binary=False)
+    bg.write_integration_points("sample_integration_points.xyz", binary=False, element_order=1)
 
-    gmsh.write("sample_mesh.stl")
+    gmsh.write("sample_mesh.stl") # Write .STL mesh (only if 2d entities exist)
+    gmsh.write("sample_mesh.inp") # Write .INP file for FEA
 
     gmsh.finalize()
 
