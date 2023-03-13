@@ -27,7 +27,11 @@ class Knot(BaseModel):
     id: str = "Knot"
     start: Tuple[float, float, float] = (0,0,0)
     direction: Tuple[float, float, float] = (0,0,100)
+    r_start: float = 0.0
     radius: float = 0.0
+    dead_knot_radius: float = 0.0
+    
+
 
 class Log(BaseModel):
     """

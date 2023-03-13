@@ -121,6 +121,17 @@ class BoardGenerator():
         gmsh.option.set_number("Mesh.MeshSizeMax", 50)
         gmsh.option.set_number("Mesh.ElementOrder", self.element_order)
         gmsh.option.set_number("Mesh.SaveAll", 0)
+
+
+
+
+        gmsh.option.setNumber("Mesh.Algorithm", 9)
+        gmsh.option.setNumber("Mesh.Algorithm3D", 10)
+        gmsh.option.setNumber("Mesh.Recombine3DAll", 1)
+        gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 3)
+        gmsh.option.setNumber('Mesh.SaveGroupsOfElements',-1001)
+        gmsh.option.setNumber('Mesh.SaveGroupsOfNodes',2)
+
         gmsh.model.occ.synchronize()
 
         gmsh.model.mesh.generate(3)
@@ -214,7 +225,7 @@ class BoardGenerator():
                     file.write(f"{coord[i * 3 + 0]} {coord[i * 3 + 1]} {coord[i * 3 + 2]}\n")
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
     import os
     os.chdir("../../../../examples/data")
