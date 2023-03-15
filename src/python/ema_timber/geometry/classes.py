@@ -1,5 +1,4 @@
 import json
-import pydantic
 import logging
 from pydantic import BaseModel
 from typing import Tuple, List
@@ -30,8 +29,6 @@ class Knot(BaseModel):
     r_start: float = 0.0
     radius: float = 0.0
     dead_knot_radius: float = 0.0
-    
-
 
 class Log(BaseModel):
     """
@@ -88,12 +85,23 @@ def main():
     print(f"Writing board data...", end="")
     with open("sample_board.json", "w") as file:
         file.write(board.json(indent=2))
+        # file.write(operations.serialize(board))
     print("OK.")
 
     print(f"Writing log data...", end="")
     with open("sample_log.json", "w") as file:
         file.write(log.json(indent=2))
+        # file.write(operations.serialize(log))
     print("OK.")
+
+    from specklepy.objects import Base
+    base = Base(data=log)
+    print(base)
+    print(base.data.pith)
+
+    for knot in base.data.knots:
+        print(knot)
 
 if __name__=="__main__":
     main()
+
