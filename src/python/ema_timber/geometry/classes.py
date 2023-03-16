@@ -20,7 +20,7 @@ class Board(BaseModel):
     dimensions: Tuple[float, float, float] = (0,0,0)
 
 class KnotRegion(BaseModel):
-    ratio : float = 1.0
+    t : float = 1.0
     radius1 : float = 0
     radius2 : float = 0
 
@@ -32,10 +32,8 @@ class Knot(BaseModel):
     start: Tuple[float, float, float] = (0,0,0)
     direction: Tuple[float, float, float] = (0,0,1)
     radius: float = 0
-    frd: KnotRegion = KnotRegion()
+    fdr: KnotRegion = KnotRegion()
     tr: KnotRegion = KnotRegion()
-    #FDR: Tuple[float, float, float, float, float, float]  = (0,0,0,0,0,0)
-    #TR: Tuple[float, float, float, float, float, float] = (0,0,0,0,0,0)
     dead_knot_radius: float = 0.0
 
     """        

@@ -21,7 +21,7 @@ def json_to_knots(path:str):
         radius = k["Knot"]["B"]
         direction = (direction[0] * length, direction[1] * length, direction[2] * length)
 
-        if abs(k["FDR"]["E"] - length) < 1e-10:
+        if abs(k["FDR"]["E"] - length) > 1e-10:
             '''
             Create complex knot region (cone + truncated cone)
             '''
@@ -35,45 +35,45 @@ def json_to_knots(path:str):
             tr = KnotRegion(t=1.0, radius1=k["TR"]["F"], radius2=0)
 
         knot_ls.append(Knot(id=id, start=start, direction=direction, radius=radius, fdr=fdr, tr=tr))
-
+    print (f"loaded {len(knot_ls)} knots")
     return knot_ls
 
-def knots_to_gmsh(knot_path:str, save_path:str, knot_ids=[]):
+def knots_to_gmsh(knot_ls, save_path:str):
     """
     generates knots in gmsh 
     """
-
-    knot_ls  = json_to_knots(knot_path)
-
     gmsh.initialize()
     gmsh.model.add(f"Knots")
-    gmsh.option.set_number("Mesh.CharacteristicLengthFromCurvature",1)
-    gmsh.option.set_number("Mesh.MinimumElementsPerTwoPi",12)
+    gmsh.option.set_number("Mesh.MeshSizeFromCurvature",12)
+    gmsh.option.set_number("Mesh.MeshSizeMax",64)
     knot_meshes = []
 
-    for k in knot_ls[:34]:
-        kr = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0]*k.KR[0], k.direction[1]*k.KR[0], k.direction[2]*k.KR[0], 1, k.KR[1])
+    for k in knot_ls:
+        print (f"generating - knot{k.id}")
+        kr = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0], k.direction[1], k.direction[2], 1, k.radius)
 
-        if k.FDR[4] != 0 and k.FDR[5] != 0 :
-            fdr= gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0]*k.FDR[4], k.direction[1]*k.FDR[4], k.direction[2]*k.FDR[4], 2, k.FDR[5]) 
+        if k.fdr.t == 1.0 :
+            fdr= gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0], k.direction[1], k.direction[2], 2, k.fdr.radius1) 
         else:
-            fdr1 = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0]*k.FDR[0], k.direction[1]*k.FDR[0], k.direction[2]*k.FDR[0], 2, k.FDR[1])
-            fdr2 = gmsh.model.occ.add_cone(k.start[0] + (k.direction[0]*k.FDR[0]), k.start[1]+ (k.direction[1]*k.FDR[0]), k.start[2]+ (k.direction[2]*k.FDR[0]), k.direction[0]*k.FDR[2], k.direction[1]*k.FDR[2], k.direction[2]*k.FDR[2], k.FDR[1], k.FDR[3])
-            #gmsh.model.occ.synchronize()
+            l1 = (k.direction[0]*k.fdr.t, k.direction[1]*k.fdr.t, k.direction[2]*k.fdr.t )
+            l2 = (k.direction[0]*(1-k.fdr.t), k.direction[1]*(1-k.fdr.t), k.direction[2]*(1-k.fdr.t))
+            fdr1 = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], l1[0], l1[1], l1[2], 2, k.fdr.radius1)
+            fdr2 = gmsh.model.occ.add_cone(k.start[0]+l1[0], k.start[1]+l1[1], k.start[2]+l1[2], l2[0], l2[1], l2[2], k.fdr.radius1, k.fdr.radius2)
             cu, cuu = gmsh.model.occ.fuse([(3,fdr1)] , [(3,fdr2)], removeObject= True, removeTool= True)
             fdr = cu[0][1]
 
-        if k.TR[4] != 0 and k.TR[5] != 0:
-            tr= gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0]*k.TR[4], k.direction[1]*k.TR[4], k.direction[2]*k.TR[4], 3, k.TR[5]) 
+        if k.tr.t == 1.0 :
+            tr= gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0], k.direction[1], k.direction[2], 3, k.tr.radius1) 
         else:
-            tr1 = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], k.direction[0]*k.TR[0], k.direction[1]*k.TR[0], k.direction[2]*k.TR[0], 3, k.TR[1])
-            tr2 = gmsh.model.occ.add_cone(k.start[0] + (k.direction[0]*k.TR[0]), k.start[1]+ (k.direction[1]*k.TR[0]), k.start[2]+ (k.direction[2]*k.TR[0]), k.direction[0]*k.TR[2], k.direction[1]*k.TR[2], k.direction[2]*k.TR[2], k.TR[1], k.TR[3])
-            #gmsh.model.occ.synchronize()
+            l1 = (k.direction[0]*k.tr.t, k.direction[1]*k.tr.t, k.direction[2]*k.tr.t )
+            l2 = (k.direction[0]*(1-k.tr.t), k.direction[1]*(1-k.tr.t), k.direction[2]*(1-k.tr.t))
+            tr1 = gmsh.model.occ.add_cone(k.start[0], k.start[1], k.start[2], l1[0], l1[1], l1[2], 3, k.tr.radius1)
+            tr2 = gmsh.model.occ.add_cone(k.start[0]+l1[0], k.start[1]+l1[1], k.start[2]+l1[2], l2[0], l2[1], l2[2], k.tr.radius1, k.tr.radius2)
             cu, cuu = gmsh.model.occ.fuse([(3,tr1)] , [(3,tr2)], removeObject= True, removeTool= True)
-            tr = cu[0][1] 
+            tr = cu[0][1]
 
         
-        cs, css = gmsh.model.occ.fragment([(3,tr)] , [(3,fdr), (3,kr) ], removeObject= True, removeTool= True)
+        cs, css = gmsh.model.occ.fragment([(3,tr)] , [(3,kr), (3,fdr)], removeObject= True, removeTool= True)
         gmsh.model.occ.synchronize()
         p = gmsh.model.addPhysicalGroup(3, [x[1] for x in cs])
         gmsh.model.setPhysicalName(3,p, f"{k.id}")
@@ -83,7 +83,7 @@ def knots_to_gmsh(knot_path:str, save_path:str, knot_ids=[]):
     gmsh.model.mesh.generate(3)
     gmsh.write(save_path)
     gmsh.finalize()
-    
+    return (knot_meshes)
 
 
 
@@ -102,4 +102,4 @@ if __name__ == "__main__":
     ...
 
     """
-    knots_to_gmsh(knots[:30], save_path )
+    knots_to_gmsh(knots[:-1], save_path )
