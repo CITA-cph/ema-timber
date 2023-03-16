@@ -1,5 +1,6 @@
 import gmsh
 import classes
+from classes import Knot, KnotRegion
 
 import json, os
 
@@ -12,36 +13,32 @@ def json_to_knots(path:str):
 
     knot_ls = []
     for k in k_data:
+
         id = k["id"]
         start = (k["POS"]["X"],k["POS"]["Y"],k["POS"]["Z"])
         direction = (k["Vector"]["X"],k["Vector"]["Y"],k["Vector"]["Z"])
-        radius = (
-                    k["Knot"]["B"],
-                    k["FDR"]["B"],
-                    k["FDR"]["D"],
-                    k["FDR"]["F"],
-                    k["TR"]["B"],
-                    k["TR"]["D"],
-                    k["TR"]["F"],
-                )
-        height = (
-                    k["Knot"]["A"],
-                    k["FDR"]["A"],
-                    k["FDR"]["C"],
-                    k["FDR"]["E"],
-                    k["TR"]["A"],
-                    k["TR"]["C"],
-                    k["TR"]["E"],
-                )
-        KR = (height[0],radius[0])
-        FDR = (height[1],radius[1],height[2],radius[2],height[3],radius[3])
-        TR = (height[4],radius[4],height[5],radius[5],height[6],radius[6])
-        knot_obj = classes.Knot(id=id , start=start, direction=direction, radius=radius, height=height , KR=KR, FDR=FDR, TR=TR )
-        knot_ls.append(knot_obj)
+        length = k["Knot"]["A"]
+        radius = k["Knot"]["B"]
+        direction = (direction[0] * length, direction[1] * length, direction[2] * length)
+
+        if abs(k["FDR"]["E"] - length) < 1e-10:
+            '''
+            Create complex knot region (cone + truncated cone)
+            '''
+            fdr = KnotRegion(t=k["FDR"]["A"] / length, radius1=k["FDR"]["B"], radius2=k["FDR"]["D"])
+            tr = KnotRegion(t=k["TR"]["A"] / length, radius1=k["TR"]["B"], radius2=k["TR"]["D"])
+        else:
+            '''
+            Create simple knot region (cone)
+            '''
+            fdr = KnotRegion(t=1.0, radius1=k["FDR"]["F"], radius2=0)
+            tr = KnotRegion(t=1.0, radius1=k["TR"]["F"], radius2=0)
+
+        knot_ls.append(Knot(id=id, start=start, direction=direction, radius=radius, fdr=fdr, tr=tr))
 
     return knot_ls
 
-def knots_to_gmsh(knot_path:str, save_path:str):
+def knots_to_gmsh(knot_path:str, save_path:str, knot_ids=[]):
     """
     generates knots in gmsh 
     """
@@ -92,7 +89,17 @@ def knots_to_gmsh(knot_path:str, save_path:str):
 
 
 if __name__ == "__main__":
+    import os
+    os.chdir("../../../../examples/data")
+    print(os.getcwd())
 
-    knot_path = "C:/Users/ceep/Det Kongelige Akademi/ERC_TIMBER_TRACK - General/02_PROJECTS/23_06 - EMA Shed/data/jsonfiles/Log04_knots.json"
-    save_path = os.path.abspath("./data/log4_knots.msh")
-    knots_to_gmsh(knot_path, save_path )
+    knot_path = "Log04_knots.json"
+    save_path = os.path.abspath("log4_knots.msh")
+
+    knots = json_to_knots(knot_path)
+    """
+    Logic to sort knots... pick which ones to mesh, etc.
+    ...
+
+    """
+    knots_to_gmsh(knots[:30], save_path )

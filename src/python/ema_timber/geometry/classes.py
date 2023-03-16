@@ -19,6 +19,11 @@ class Board(BaseModel):
     basePlane: Plane = Plane()
     dimensions: Tuple[float, float, float] = (0,0,0)
 
+class KnotRegion(BaseModel):
+    ratio : float = 1.0
+    radius1 : float = 0
+    radius2 : float = 0
+
 class Knot(BaseModel):
     """
     Knot class for storing basic parameters
@@ -26,11 +31,11 @@ class Knot(BaseModel):
     id: str = "Knot"
     start: Tuple[float, float, float] = (0,0,0)
     direction: Tuple[float, float, float] = (0,0,1)
-    radius: Tuple[float, float, float, float, float, float, float] = (0,0,0,0,0,0,0)
-    height: Tuple[float, float, float, float, float, float, float] = (0,0,0,0,0,0,0)
-    KR: Tuple[float, float] = (0,0)
-    FDR: Tuple[float, float, float, float, float, float]  = (0,0,0,0,0,0)
-    TR: Tuple[float, float, float, float, float, float] = (0,0,0,0,0,0)
+    radius: float = 0
+    frd: KnotRegion = KnotRegion()
+    tr: KnotRegion = KnotRegion()
+    #FDR: Tuple[float, float, float, float, float, float]  = (0,0,0,0,0,0)
+    #TR: Tuple[float, float, float, float, float, float] = (0,0,0,0,0,0)
     dead_knot_radius: float = 0.0
 
     """        
