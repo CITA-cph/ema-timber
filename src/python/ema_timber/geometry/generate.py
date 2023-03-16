@@ -102,4 +102,4 @@ if __name__ == "__main__":
     ...
 
     """
-    knots_to_gmsh(knots[:-1], save_path )
+    knots_to_gmsh(knots[:10], save_path )
