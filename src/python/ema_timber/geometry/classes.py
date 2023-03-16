@@ -25,11 +25,50 @@ class Knot(BaseModel):
     """
     id: str = "Knot"
     start: Tuple[float, float, float] = (0,0,0)
-    direction: Tuple[float, float, float] = (0,0,100)
-    r_start: float = 0.0
-    radius: float = 0.0
+    direction: Tuple[float, float, float] = (0,0,1)
+    radius: Tuple[float, float, float, float, float, float, float] = (0,0,0,0,0,0,0)
+    height: Tuple[float, float, float, float, float, float, float] = (0,0,0,0,0,0,0)
+    KR: Tuple[float, float] = (0,0)
+    FDR: Tuple[float, float, float, float, float, float]  = (0,0,0,0,0,0)
+    TR: Tuple[float, float, float, float, float, float] = (0,0,0,0,0,0)
     dead_knot_radius: float = 0.0
 
+    """        
+    KR: [ A, B ]
+
+            B----->
+        ___________
+        \    ^ A  /
+         \   |   /
+          \  |  /
+           \ | /
+            \|/
+
+    FDR & TR (a): [ A, B, C, D, E, F ]
+
+            F----->
+        ___________
+        \    ^ E  /
+         \   |   /
+          \  |  /
+           \ | /
+            \|/
+
+    FDR & TR (b):
+
+             D--------->
+    ___________________
+    |        ^ C      |
+     \       |       /
+      |      |B---->|
+       \_____|_____/
+        \    ^ A  /
+         \   |   /
+          \  |  /
+           \ | /
+            \|/     
+
+    """
 class Log(BaseModel):
     """
     Log class for storing basic parameters

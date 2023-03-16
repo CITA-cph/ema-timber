@@ -34,7 +34,6 @@ def to_rhino_brep(occ_brep : rhino3dm.Brep):
     rbrep = rhino3dm.Brep()
     #print(dir(rbrep))
 
-
 def to_speckle_brep(occ_brep):
     """
     Surfaces: List[Surface] = None
@@ -85,6 +84,9 @@ def to_speckle_curve(occ_curve : Geom_BSplineCurve):
     return Curve(degree=degree, points=points, weights=weights, knots=knots_flat, closed=closed)
 
 def speckle_knots_to_occ(speckle_curve):
+    """
+    Speckle Curve knots to occ knots
+    """
     last_knot = speckle_curve.knots[0]
     current_knot = speckle_curve.knots[1]
 
@@ -113,7 +115,6 @@ def speckle_knots_to_occ(speckle_curve):
     mults[-1] = speckle_curve.degree + 1
 
     return knots, mults
-
 
 def to_occ_curve(speckle_curve : Curve):
     """
