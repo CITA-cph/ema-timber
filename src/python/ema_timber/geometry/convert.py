@@ -2,26 +2,33 @@ import logging
 
 import rhino3dm
 import specklepy
-from specklepy.objects.geometry import Brep, Curve, Point, Line, Circle, Plane, Vector
+from specklepy.objects.geometry import Brep, Curve, Point, Line, Circle, Plane, Vector, Arc
 
 from rhino3dm import Point3d, Point4d, Vector3d
 import OCC
 from OCC.Core import gp
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeEdge
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeVertex, BRepBuilderAPI_MakeShell
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_Sewing
 from OCC.Core.BRep import BRep_Tool, BRep_Builder
-from OCC.Core.GC import GC_MakeSegment, GC_MakeCircle
-from OCC.Core.GCE2d import GCE2d_MakeSegment, GCE2d_MakeCircle 
-from OCC.Core.TopoDS import TopoDS_Builder, TopoDS_Compound
+from OCC.Core.BRepPrim import BRepPrim_Builder
+from OCC.Core.GC import GC_MakeSegment, GC_MakeCircle, GC_MakeArcOfCircle 
+from OCC.Core.GCE2d import GCE2d_MakeSegment, GCE2d_MakeCircle, GCE2d_MakeArcOfCircle 
+from OCC.Core.TopoDS import TopoDS_Builder, TopoDS_Shell, TopoDS_Compound
+from OCC.Core.Convert import Convert_CircleToBSplineCurve
+from OCC.Core.GeomConvert import GeomConvert_CompCurveToBSplineCurve
+from OCC.Core.Geom2dConvert import Geom2dConvert_CompCurveToBSplineCurve 
 
 
 from OCC.Core.Geom import Geom_BSplineCurve, Geom_Line, Geom_TrimmedCurve, Geom_BSplineSurface
 from OCC.Core.Geom2d import Geom2d_Curve, Geom2d_BSplineCurve
 from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Ax2, gp_Vec
-from OCC.Core.gp import gp_Pnt2d, gp_Dir2d, gp_Ax22d
+from OCC.Core.gp import gp_Pnt2d, gp_Dir2d, gp_Ax22d, gp_Circ2d
 from OCC.Core.TColStd import TColStd_Array1OfReal, TColStd_Array2OfReal, TColStd_Array1OfInteger
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_Array1OfPnt2d
+
+TOLERANCE = 1e-6
 
 class RhinoToOcc:
     def gp_Pnt_to_string(pt):
@@ -157,6 +164,21 @@ class SpeckleToOcc:
         return GCE2d_MakeSegment(start, end).Value()
 
     @staticmethod
+    def arc(speckle_arc: Arc):
+        return GC_MakeArcOfCircle(
+            SpeckleToOcc.point(speckle_arc.startPoint),
+            SpeckleToOcc.point(speckle_arc.midPoint),
+            SpeckleToOcc.point(speckle_arc.endPoint)).Value()
+
+
+    @staticmethod
+    def arc2d(speckle_arc: Arc):
+        return GCE2d_MakeArcOfCircle(
+            SpeckleToOcc.point2d(speckle_arc.startPoint),
+            SpeckleToOcc.point2d(speckle_arc.midPoint),
+            SpeckleToOcc.point2d(speckle_arc.endPoint)).Value()
+
+    @staticmethod
     def curve(speckle_curve : Curve):
         """
         Speckle Curve to OCC Geom_BSplineCurve
@@ -167,6 +189,15 @@ class SpeckleToOcc:
             return SpeckleToOcc.line(speckle_curve)
         elif speckle_curve.speckle_type.endswith("Circle"):
             return SpeckleToOcc.circle(speckle_curve)
+        elif speckle_curve.speckle_type.endswith("Arc"):
+            return SpeckleToOcc.arc(speckle_curve)
+        elif speckle_curve.speckle_type.endswith("Polycurve"):
+            segments = speckle_curve.segments
+            comp = GeomConvert_CompCurveToBSplineCurve()
+            for seg in segments:
+                comp.Add(SpeckleToOcc.curve(seg), TOLERANCE)
+            return comp.BSplineCurve()
+
         else:
             degree = speckle_curve.degree
             closed = bool(speckle_curve.closed)
@@ -202,7 +233,7 @@ class SpeckleToOcc:
         return Geom_BSplineCurve(poles, weights, knots, mults, degree, closed)
 
     @staticmethod
-    def curve2d(speckle_curve : Curve):
+    def curve2d(speckle_curve : Curve, convert_circles = True):
         """
         Speckle Curve to OCC Geom_BSplineCurve
         """
@@ -210,8 +241,48 @@ class SpeckleToOcc:
 
         if speckle_curve.speckle_type.endswith("Line"):
             return SpeckleToOcc.line2d(speckle_curve)
+        elif speckle_curve.speckle_type.endswith("Arc"):
+            return SpeckleToOcc.arc2d(speckle_curve)            
         elif speckle_curve.speckle_type.endswith("Circle"):
-            return SpeckleToOcc.circle2d(speckle_curve)
+            circ = SpeckleToOcc.circle2d(speckle_curve)
+            if convert_circles:
+                conv = Convert_CircleToBSplineCurve(circ.Circ2d())
+
+                logging.debug(f"   NbPoles   {conv.NbPoles()}")
+                logging.debug(f"   NbKnots   {conv.NbKnots()}")
+                logging.debug(f"   Degree    {conv.Degree()}")
+                logging.debug(f"   Periodic  {conv.IsPeriodic()}")
+
+                nKnots = conv.NbKnots()
+                nPoles = conv.NbPoles()
+
+                poles = TColgp_Array1OfPnt2d(1, nPoles)
+                for i in range(1, nPoles + 1):
+                    poles.SetValue(i, conv.Pole(i))
+
+                weights = TColStd_Array1OfReal(1, nPoles)
+                for i in range(1, nPoles + 1):
+                    weights.SetValue(i, conv.Weight(i))
+
+                knots = TColStd_Array1OfReal(1, nKnots)
+                for i in range(1, nKnots + 1):
+                    knots.SetValue(i, conv.Knot(i))
+
+                mults = TColStd_Array1OfInteger(1, nKnots)
+                for i in range(1, nKnots + 1):
+                    mults.SetValue(i, conv.Multiplicity(i))
+
+                return Geom2d_BSplineCurve(poles, weights, knots, mults, conv.Degree(), conv.IsPeriodic())
+            else:
+                return circ
+        elif speckle_curve.speckle_type.endswith("Polycurve"):
+            segments = speckle_curve.segments
+            comp = Geom2dConvert_CompCurveToBSplineCurve()
+            for seg in segments:
+                comp.Add(SpeckleToOcc.curve2d(seg), TOLERANCE)
+
+            return comp.BSplineCurve()
+
         else:
             degree = speckle_curve.degree
             closed = bool(speckle_curve.closed)
@@ -296,29 +367,29 @@ class SpeckleToOcc:
     @staticmethod
     def brep(speckle_brep):
 
-        print(f"Speckle Brep stats")
-        print(f"   num vertices {len(speckle_brep.Vertices)}")
-        print(f"   num curve3d  {len(speckle_brep.Curve3D)}")
-        print(f"   num curve2d  {len(speckle_brep.Curve2D)}")
-        print(f"   num surfaces {len(speckle_brep.Surfaces)}")
-        print(f"   num edges    {len(speckle_brep.Edges)}")
-        print(f"   num faces    {len(speckle_brep.Faces)}")
+        logging.debug(f"\nSpeckle Brep stats")
+        logging.debug(f"   num vertices {len(speckle_brep.Vertices)}")
+        logging.debug(f"   num curve3d  {len(speckle_brep.Curve3D)}")
+        logging.debug(f"   num curve2d  {len(speckle_brep.Curve2D)}")
+        logging.debug(f"   num surfaces {len(speckle_brep.Surfaces)}")
+        logging.debug(f"   num edges    {len(speckle_brep.Edges)}")
+        logging.debug(f"   num faces    {len(speckle_brep.Faces)}")
 
         vertices = [BRepBuilderAPI_MakeVertex(gp_Pnt(p.x, p.y, p.z)).Vertex() for p in speckle_brep.Vertices]
 
-        #for vert in vertices:
-        #    print(f"vert   {gp_Pnt_to_string(BRep_Tool.Pnt(vert))}")
-
         curve3d = [SpeckleToOcc.curve(crv) for crv in speckle_brep.Curve3D]
-        print(f"num 3d curves: {len(curve3d)}")
         curve2d = [SpeckleToOcc.curve2d(crv) for crv in speckle_brep.Curve2D]
-        print(f"num 2d curves: {len(curve2d)}")
+        logging.debug(f"curve2d")
+        for crv2d in curve2d:
+            logging.debug(f"    {crv2d}")
+        logging.debug(f"curve3d")
+        for crv3d in curve3d:
+            logging.debug(f"    {crv3d}")
+                     
         surfaces = [SpeckleToOcc.surface(srf) for srf in speckle_brep.Surfaces]
-        print(f"num surfaces: {len(surfaces)}")
 
-        print()
-        print("Edges #################")
-        print()
+        logging.debug("\nEdges #################\n")
+        '''
 
         edges = []
         for be in speckle_brep.Edges:
@@ -326,10 +397,10 @@ class SpeckleToOcc:
             startv = vertices[be.StartIndex]
             endv = vertices[be.EndIndex]
 
-            print("edge")
-            print(f"    Curve3dIndex {be.Curve3dIndex}")
-            print(f"    StartIndex {be.StartIndex}")
-            print(f"    EndIndex {be.EndIndex}")
+            logging.debug("edge")
+            logging.debug(f"    Curve3dIndex {be.Curve3dIndex}")
+            logging.debug(f"    StartIndex {be.StartIndex}")
+            logging.debug(f"    EndIndex {be.EndIndex}")
 
             # print(f"{crv3d}")
             # print(f"    crv first {gp_Pnt_to_string(crv3d.Value(crv3d.FirstParameter()))}")
@@ -339,73 +410,72 @@ class SpeckleToOcc:
                 #print(f"{be.StartIndex}")
                 #print(f"{be.EndIndex}")
 
+            logging.debug(f"CURVE TYPE: {crv3d}")
+
             if be.StartIndex == be.EndIndex:
                 edge = BRepBuilderAPI_MakeEdge(crv3d)
             else:
                 edge = BRepBuilderAPI_MakeEdge(crv3d, startv, endv)
             edges.append(edge.Edge())
-
-        print()
-        print("Trims #################")
-        print()
+        '''
+        logging.debug("\nTrims #################\n")
 
         trims = []
         trim_count = 0
         for t in speckle_brep.Trims:
             face = speckle_brep.Faces[t.FaceIndex]
 
-            print(f"trim")
-            print(f"    CurveIndex {t.CurveIndex}")
-            print(f"    EdgeIndex {t.EdgeIndex}")
-            print(f"    SurfaceIndex {face.SurfaceIndex}")
+            logging.debug(f"trim")
+            logging.debug(f"    CurveIndex {t.CurveIndex}")
+            logging.debug(f"    EdgeIndex {t.EdgeIndex}")
+            logging.debug(f"    SurfaceIndex {face.SurfaceIndex}")
 
             tcurve = curve2d[t.CurveIndex]
-            print(f"    {tcurve}")
+            logging.debug(f"    {tcurve}")
 
             if isinstance(tcurve, Geom2d_Curve):
-                edge2d = BRepBuilderAPI_MakeEdge(tcurve, surfaces[face.SurfaceIndex]).Edge()
+                edge2d = BRepBuilderAPI_MakeEdge(tcurve, surfaces[face.SurfaceIndex])
             else:
-                edge2d = BRepBuilderAPI_MakeEdge(tcurve).Edge()
+                edge2d = BRepBuilderAPI_MakeEdge(tcurve)
 
-            trims.append(edge2d)
+            if edge2d.IsDone():
+                trims.append(edge2d.Edge())
+            else:
+                trims.append(None)
             trim_count += 1
             pass
 
-        print()
-        print("Loops / Wires #########")
-        print()
+        logging.debug("\nLoops / Wires #########\n")
 
         wires = []
 
         for loop in speckle_brep.Loops:
             wire = BRepBuilderAPI_MakeWire()
-            print(f"loop {loop}")
-            print(f"    TrimIndices {loop.TrimIndices}")
+            logging.debug(f"loop {loop}")
+            logging.debug(f"    TrimIndices {loop.TrimIndices}")
             for ti in loop.TrimIndices:
                 wire.Add(trims[ti])
-                print(f"    added {ti}")
+                logging.debug(f"    added {ti}")
 
             if not wire.IsDone():
-                print(f"Wire failed: {wire.Error()}")
+                logging.debug(f"Wire failed: {wire.Error()}")
                 wires.append(None)
                 continue
 
             wires.append(wire.Wire())
 
-        print()
-        print("Faces #################")
-        print()
+        logging.debug("\nFaces #################\n")
 
         faces = []
         for sface in speckle_brep.Faces:
 
-            print(f"face")
-            print(f"    outerloop {sface.OuterLoopIndex}")
-            print(f"    surface   {sface.SurfaceIndex}")
-            print(f"    loop ids   {sface.LoopIndices}")
+            logging.debug(f"face")
+            logging.debug(f"    outerloop {sface.OuterLoopIndex}")
+            logging.debug(f"    surface   {sface.SurfaceIndex}")
+            logging.debug(f"    loop ids   {sface.LoopIndices}")
 
             if wires[sface.OuterLoopIndex] is None:
-                print(f"Couldn't find loop {sface.OuterLoopIndex}")
+                logging.debug(f"Couldn't find loop {sface.OuterLoopIndex}")
                 continue
 
             face = BRepBuilderAPI_MakeFace(surfaces[sface.SurfaceIndex], wires[sface.OuterLoopIndex], False)
@@ -415,37 +485,61 @@ class SpeckleToOcc:
                     face.Add(wires[hole])
 
             if not face.IsDone():
-                print(f"face did not finish: {face.Error()}")
+                logging.debug(f"face did not finish: {face.Error()}")
                 continue
 
             faces.append(face.Face())
 
-        print()
-        print("Shells #################")
-        print()
+        logging.debug("")
+        logging.debug("Shells #################")
+        logging.debug("")
 
         shells = []
         for srf in surfaces:
             shell = BRepBuilderAPI_MakeShell(srf).Shell()
-            print(f"Made shell: {shell}")
+            logging.debug(f"Made shell: {shell}")
             shells.append(shell)
 
-        print()
-        print("Compound #################")
-        print()
+
+
+        logging.debug("")
+        logging.debug("Compound #################")
+        logging.debug("")
+
 
         c = TopoDS_Compound()
         topo = TopoDS_Builder()
         topo.MakeCompound(c)
 
+        '''
+        sew = BRepOffsetAPI_Sewing(TOLERANCE, True, True, True, False)
 
         for face in faces:
-            topo.Add(c, face)
+            sew.Add(face)
+
+        sew.Perform()
+        logging.debug(f"sew: {sew.Dump()}")
+        logging.debug(f"{sew.SewedShape()}")
+
+        topo.Add(c, sew.SewedShape())        
+        '''
+
+        builder = BRep_Builder()
+        bprim = BRepPrim_Builder(builder)
+        shell = TopoDS_Shell()
+
+        bprim.MakeShell(shell)
+
+        for face in faces:
+            bprim.AddShellFace(shell, face)
+            #topo.Add(c, face)
             pass
 
-        for shell in shells:
-            if shell is not None:
-                #topo.Add(c, shell)
+        return shell
+
+        for s in shells:
+            if s is not None:
+                #topo.Add(c, s)
             #break
                 pass
 
@@ -536,8 +630,8 @@ def to_speckle_curve(occ_curve : Geom_BSplineCurve):
 
 
 def main():
-    to_rhino_curve("test")
-    to_rhino_brep("test")
+    RhinoToOcc.to_rhino_curve("test")
+    RhinoToOcc.to_rhino_brep("test")
 
     test_occ_curve_to_speckle()
 
