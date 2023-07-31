@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimber", "EmaTimber\EmaTimber.csproj", "{0A1AD59C-9750-4FFB-9F1E-08EA37CC8D80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimber.GH", "EmaTimber.GH\EmaTimber.GH.csproj", "{34E0FE2E-4D40-4444-88D0-7BD701941516}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A1AD59C-9750-4FFB-9F1E-08EA37CC8D80}.Debug|x64.ActiveCfg = Debug|x64
+		{0A1AD59C-9750-4FFB-9F1E-08EA37CC8D80}.Debug|x64.Build.0 = Debug|x64
+		{0A1AD59C-9750-4FFB-9F1E-08EA37CC8D80}.Release|x64.ActiveCfg = Release|x64
+		{0A1AD59C-9750-4FFB-9F1E-08EA37CC8D80}.Release|x64.Build.0 = Release|x64
+		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Debug|x64.ActiveCfg = Debug|x64
+		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Debug|x64.Build.0 = Debug|x64
+		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Release|x64.ActiveCfg = Release|x64
+		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {043A93EB-D42E-493D-9CBA-711A631A8E12}
+	EndGlobalSection
+EndGlobal
