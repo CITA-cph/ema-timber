@@ -176,34 +176,40 @@ namespace RawLamb
         /// </summary>
         /// <param name="brep">Input Brep.</param>
         /// <returns>A baseplane for the Brep.</returns>
-        public static Plane FindBestBasePlane(Brep brep)
+        public static Plane FindBestBasePlane(Brep brep, Vector3d optx)
         {
             Vector3d vec = Vector3d.XAxis;
             Vector3d xaxis = Vector3d.XAxis, zaxis = Vector3d.ZAxis;
             BoundingBox bb = BoundingBox.Empty;
             Plane plane = Plane.Unset;
 
-            var edge_vectors = new List<Vector3d>();
-
-            foreach (var edge in brep.Edges)
+            if (optx.IsValid)
+                xaxis = optx;
+            else
             {
-                if (edge.IsLinear())
+
+                var edge_vectors = new List<Vector3d>();
+
+                foreach (var edge in brep.Edges)
                 {
-                    xaxis = edge.TangentAtStart;
-                    xaxis *= edge.GetLength();
+                    if (edge.IsLinear())
+                    {
+                        xaxis = edge.TangentAtStart;
+                        xaxis *= edge.GetLength();
 
-                    if (xaxis * vec < 0)
-                        xaxis.Reverse();
+                        if (xaxis * vec < 0)
+                            xaxis.Reverse();
 
-                    vec += xaxis;
-                    edge_vectors.Add(xaxis);
+                        vec += xaxis;
+                        edge_vectors.Add(xaxis);
+                    }
                 }
+
+                double[] distances = edge_vectors.Select(x => Math.Abs(x * vec)).ToArray();
+                var min_index = Array.IndexOf(distances, distances.Max());
+
+                xaxis = edge_vectors[min_index];
             }
-
-            double[] distances = edge_vectors.Select(x => Math.Abs(x * vec)).ToArray();
-            var min_index = Array.IndexOf(distances, distances.Max());
-
-            xaxis = edge_vectors[min_index];
 
             zaxis = GetBestCrossVector(brep, xaxis);
 

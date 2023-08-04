@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 using Rhino.Geometry;
 using DeepSight;
-using DeepSight.Rhino;
+using DeepSight.RhinoCommon;
 
 using Grid = DeepSight.FloatGrid;
 

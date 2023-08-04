@@ -5,14 +5,28 @@ using Rhino.Geometry;
 using StudioAvw.Geometry;
 
 using DeepSight;
-using DeepSight.Rhino;
+using DeepSight.RhinoCommon;
 
 using Grid = DeepSight.FloatGrid;
 using System.Linq;
 
 namespace RawLamb
 {
-    public class Log
+    public abstract class LogBase
+    {
+        public Guid Id;
+        public string Name;
+        public Plane Plane;
+        public BoundingBox BoundingBox;
+
+        public LogBase()
+        {
+            Id = Guid.NewGuid();
+            Plane = Plane.WorldXY;
+        }
+    }
+
+    public class Log// : LogBase
     {
         public Guid Id;
         public string Name;
@@ -23,7 +37,8 @@ namespace RawLamb
         public BoundingBox BoundingBox;
         public Dictionary<string, GridApi> Grids;
         public RTree Tree;
-        private List<KnotRegion> m_knot_regions;
+
+        //private List<KnotRegion> m_knot_regions;
 
         public List<Board> Boards;
 
@@ -35,7 +50,7 @@ namespace RawLamb
             }
         }
 
-        public Log()
+        public Log() : base()
         {
             Id = Guid.NewGuid();
             Boards = new List<Board>();
@@ -46,9 +61,10 @@ namespace RawLamb
             Grids = new Dictionary<string, GridApi>();
         }
 
-        public Log(string name, Grid ctlog) : base()
+        public Log(string name, Grid ctlog) : this()
         {
             Name = name;
+            Grids[name] = ctlog;
         }
 
         public void ReadInfoLog(string path)
@@ -89,6 +105,9 @@ namespace RawLamb
                     Radius = ilog.Knots[i + 8],
                     Volume = ilog.Knots[i + 10]
                 };
+
+                knot.SetFibreDeviationRegion();
+                knot.SetTransitionRegion();
 
                 Knots.Add(knot);
             }
@@ -380,12 +399,15 @@ namespace RawLamb
         public void ConstructRTree()
         {
             var knot_region_geometry = new List<Brep>();
-            m_knot_regions = new List<KnotRegion>();
+            //m_knot_regions = new List<KnotRegion>();
 
             foreach (Knot knot in Knots)
             {
                 var knot_region = new KnotRegion(knot, 6, 35);
-                m_knot_regions.Add(knot_region);
+                if (knot_region == null) continue;
+
+                knot_region = knot.FibreDeviationRegion;
+                //m_knot_regions.Add(knot_region);
                 knot_region_geometry.Add(knot_region.ToBrep());
             }
 
@@ -478,7 +500,8 @@ namespace RawLamb
                 // Now find if they are actually within the knot regions
                 for (int j = 0; j < found.Count; ++j)
                 {
-                    var krdata = m_knot_regions[found[j]];
+                    var knot = Knots[found[j]];
+                    var krdata = knot.FibreDeviationRegion;
                     if (krdata.Contains(point) > 0)
                         inside.Add(found[j]);
                 }

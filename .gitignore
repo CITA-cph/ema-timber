@@ -156,6 +156,7 @@ cython_debug/
 *.npy
 *.rhl
 *.3dmbak
+*.csproj.user
 
 src/EmaTimber/.vs
 bin
@@ -163,3 +164,7 @@ src/EmaTimber/EmaTimber.GH/EmaTimber.GH.csproj.user
 src/EmaTimber/EmaTimber.GH/obj
 src/EmaTimber/EmaTimber/obj
 src/EmaTimber/packages
+src/EmaTimber/RawLamAllocator2/bin
+src/EmaTimber/RawLamAllocator2/obj
+src/EmaTimber/RawLamAllocator2/obj
+src/EmaTimber/EmaTimberRhino/obj

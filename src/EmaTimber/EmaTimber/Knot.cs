@@ -16,6 +16,9 @@ namespace RawLamb
         public int Index;
         public double DeadKnotRadius;
 
+        public KnotRegion TransitionRegion;
+        public KnotRegion FibreDeviationRegion;
+
         public Knot() { }
 
         public Knot(int index, Line axis, double dead_knot_radius, double radius, double length, double volume)
@@ -42,6 +45,16 @@ namespace RawLamb
         public void Transform(Transform xform) => Axis.Transform(xform);
         public int Contains(Point3d point) => RawLamb.Geometry.PointInCone(Axis.From, Axis.Direction, Radius, point);
         public Brep ToBrep() => new Cone(new Plane(Axis.From, Axis.Direction), Axis.Length, Radius).ToBrep(true);
+
+        public void SetTransitionRegion(double apex_factor = 7, double thickness = 30)
+        {
+            TransitionRegion = new KnotRegion(this, apex_factor, thickness);
+        }
+
+        public void SetFibreDeviationRegion(double apex_factor = 6, double thickness = 25)
+        {
+            FibreDeviationRegion = new KnotRegion(this, apex_factor, thickness);
+        }
 
         /// <summary>
         /// Create Fibre Deviation Region (FDR) or TR (Transition Region) knot regions as per 

@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimber", "EmaTimber\EmaT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimber.GH", "EmaTimber.GH\EmaTimber.GH.csproj", "{34E0FE2E-4D40-4444-88D0-7BD701941516}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaControl", "EmaControl\EmaControl.csproj", "{4DF8543A-0B08-4469-9ADB-017867C044AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimberRhino", "EmaTimberRhino\EmaTimberRhino.csproj", "{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawLamAllocator2", "RawLamAllocator2\RawLamAllocator2.csproj", "{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +27,16 @@ Global
 		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Debug|x64.Build.0 = Debug|x64
 		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Release|x64.ActiveCfg = Release|x64
 		{34E0FE2E-4D40-4444-88D0-7BD701941516}.Release|x64.Build.0 = Release|x64
+		{4DF8543A-0B08-4469-9ADB-017867C044AA}.Debug|x64.ActiveCfg = Debug|x64
+		{4DF8543A-0B08-4469-9ADB-017867C044AA}.Debug|x64.Build.0 = Debug|x64
+		{4DF8543A-0B08-4469-9ADB-017867C044AA}.Release|x64.ActiveCfg = Release|x64
+		{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}.Debug|x64.ActiveCfg = Debug|x64
+		{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}.Debug|x64.Build.0 = Debug|x64
+		{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}.Release|x64.ActiveCfg = Release|x64
+		{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}.Release|x64.Build.0 = Release|x64
+		{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}.Debug|x64.ActiveCfg = Debug|x64
+		{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}.Debug|x64.Build.0 = Debug|x64
+		{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

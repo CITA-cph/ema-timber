@@ -38,7 +38,9 @@ namespace EmaTimber.GH.Components
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBrepParameter("Brep", "B", "Grid to erode.", GH_ParamAccess.item);
+            pManager.AddBrepParameter("Brep", "B", "Brep to analyse for base plane.", GH_ParamAccess.item);
+            pManager.AddVectorParameter("XAxis", "X", "Optional vector to lock the primary direction (X-axis).", GH_ParamAccess.item, Vector3d.Unset);
+            pManager[1].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -51,7 +53,10 @@ namespace EmaTimber.GH.Components
             Brep brep = null;
             if (!DA.GetData("Brep", ref brep)) return;
 
-            var bplane = RawLamb.Geometry.FindBestBasePlane(brep);
+            Vector3d xaxis = Vector3d.Unset;
+            DA.GetData("XAxis", ref xaxis);
+
+            var bplane = RawLamb.Geometry.FindBestBasePlane(brep, xaxis);
 
             DA.SetData("Baseplane", bplane);
         }
