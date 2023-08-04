@@ -12,10 +12,17 @@ using Grasshopper;
 
 namespace RawLamAllocator
 {
-    internal partial class Allocator
+    internal class Meshing
     {
+        private Allocator m_alloc;
+        internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public static void DoMeshing(
+        public Meshing(Allocator alloc)
+        {
+            m_alloc = alloc;
+
+        }
+        public void Run(
             RhinoDoc doc, List<Brep> breps, List<string> names, 
             out Dictionary<int, double[]> nodes, out Dictionary<int, int[]> elements,
             out Dictionary<string, List<int>> nodeGroups, out Dictionary<string, List<Pair>> elementGroups,
@@ -105,7 +112,7 @@ namespace RawLamAllocator
                 //Gmsh.Mesh.RemoveDuplicateNodes();
                 //Gmsh.Mesh.RemoveDuplicateElements();
 
-                var debug_inp_output_path = System.IO.Path.Combine(Settings.CalculixOutputPath, "debug.inp");
+                var debug_inp_output_path = System.IO.Path.Combine(m_alloc.Settings.CalculixOutputPath, "debug.inp");
                 Gmsh.Write(debug_inp_output_path);
 
                 nodes = new Dictionary<int, double[]>();
@@ -162,7 +169,7 @@ namespace RawLamAllocator
 
                         for (int k = 0; k < numNodes; ++k)
                         {
-                            if ((int)elementNodeTags[i][j * numNodes + k] == 0) Logger.Error("Node ID can't be 0");
+                            if ((int)elementNodeTags[i][j * numNodes + k] == 0) Allocator.Logger.Error("Node ID can't be 0");
                             elementNodes[k] = (int)elementNodeTags[i][j * numNodes + k];
                             //Logger.Info("    {0}", elementNodes[k]);
 

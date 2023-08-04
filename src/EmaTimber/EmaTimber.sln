@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaControl", "EmaControl\Em
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmaTimberRhino", "EmaTimberRhino\EmaTimberRhino.csproj", "{CDB7CF96-C7DA-4239-8FAD-95D50DC6F790}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawLamAllocator2", "RawLamAllocator2\RawLamAllocator2.csproj", "{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawLamAllocator", "RawLamAllocator2\RawLamAllocator.csproj", "{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

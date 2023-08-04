@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{338D1CB5-B9C6-494D-B620-89CDAE1CFF17}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RawLamAllocator2</RootNamespace>
-    <AssemblyName>RawLamAllocator2</AssemblyName>
+    <RootNamespace>RawLamAllocator</RootNamespace>
+    <AssemblyName>RawLamAllocator</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -243,14 +243,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Allocator.cs" />
+    <Compile Include="AllocatorLoading.cs" />
     <Compile Include="ConverterRawLam.cs" />
     <Compile Include="Material.cs" />
     <Compile Include="Nesting.cs" />
+    <Compile Include="Results.cs" />
     <Compile Include="rlComponent.cs" />
     <Compile Include="Meshing.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="Simulation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

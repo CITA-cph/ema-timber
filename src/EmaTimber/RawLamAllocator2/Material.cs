@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RawLamAllocator
 {
-    internal static partial class Allocator
+    internal partial class Allocator
     {
         static List<string> OrthotropicWoodMaterial()
         {

@@ -1,86 +1,51 @@
 ﻿
-using RawLamAllocator;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Rhino.Geometry;
-using OpenNestLib;
-using NLog;
-using System.Diagnostics;
-using System.Threading;
+using Rhino.DocObjects;
 
-using Speckle.Core.Models;
-using CaeGlobals;
-using RawLam;
+using NLog;
+
 using CaeModel;
 using CaeMesh;
-using FileInOut;
-using Sentry;
-using Rhino.DocObjects;
-using System.IO;
-using System.Xml.Linq;
-
-using DeepSight;
 
 using RawLamb;
-using CaeResults;
-using Objects.Other;
 using Rhino;
-using Speckle.Core.Credentials;
 
 namespace RawLamAllocator
 {
 
-    public class AllocatorResults : Base
-    {
-        public string ModelName { get; set; }
-        public string FrdPath { get; set; }
-        public string InpPath { get; set; }
-        public string RhinoPath { get; set; }
 
-        public double MaxDisplacement { get; set; }
-        public double MinDisplacement { get; set; }
-
-        public List<Objects.Other.Transform> ComponentTransforms { get; set; }
-        public List<string> ComponentNames { get; set; }
-        public List<string> ComponentBoards { get; set; }
-        public List<string> ComponentLogs { get; set; }
-
-        public AllocatorResults()
-        {
-            ComponentTransforms = new List<Objects.Other.Transform>();
-            ComponentNames = new List<string>();
-            ComponentBoards = new List<string>();
-            ComponentLogs = new List<string>();
-        }
-    }
 
     internal partial class Allocator
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private static List<rlComponent> Components = new List<rlComponent>();
-        private static List<RawLamb.Board> Boards = new List<RawLamb.Board>();
-        private static Dictionary<string, RawLamb.Log> Logs = new Dictionary<string, RawLamb.Log>();
-        private static List<Rhino.Geometry.Mesh> Supports = new List<Rhino.Geometry.Mesh>();
+        public List<rlComponent> Components = new List<rlComponent>();
+        public List<RawLamb.Board> Boards = new List<RawLamb.Board>();
+        public Dictionary<string, RawLamb.Log> Logs = new Dictionary<string, RawLamb.Log>();
+        public List<Rhino.Geometry.Mesh> Supports = new List<Rhino.Geometry.Mesh>();
 
-        private static Dictionary<string, Rhino.Geometry.Transform> Log2BoardTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
-        
-        private static Dictionary<string, Rhino.Geometry.Transform> PlacementTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
-        private static Dictionary<string, Rhino.Geometry.Transform> World2LocalTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
-        private static Dictionary<string, Rhino.Geometry.Transform> Component2LogTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
-        private static Dictionary<string, string> ComponentBoardMap = new Dictionary<string, string>();
-        private static Dictionary<string, string> BoardLogMap = new Dictionary<string, string>();
+        public Dictionary<string, Rhino.Geometry.Transform> Log2BoardTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
 
-        private static Dictionary<string, LogModel> LogModels = new Dictionary<string, LogModel>();
+        public Dictionary<string, Rhino.Geometry.Transform> PlacementTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
+        public Dictionary<string, Rhino.Geometry.Transform> World2LocalTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
+        public Dictionary<string, Rhino.Geometry.Transform> Component2LogTransforms = new Dictionary<string, Rhino.Geometry.Transform>();
+        public Dictionary<string, string> ComponentBoardMap = new Dictionary<string, string>();
+        public Dictionary<string, string> BoardLogMap = new Dictionary<string, string>();
+
+        public Dictionary<string, LogModel> LogModels = new Dictionary<string, LogModel>();
 
 
-        private static Settings Settings;
-        private static double Scale = 0.001; // Millimetres to metres
+        public Settings Settings;
+        public double Scale = 0.001; // Millimetres to metres
 
         public static List<int> GetNodesOnMesh(RhinoDoc rhinoDocument, FeModel model, IList<Rhino.Geometry.Mesh> meshes, Step step, double tolerance = 1.0)
         {
@@ -126,7 +91,7 @@ namespace RawLamAllocator
         }
 
 
-            public static void Run(string settingsPath = "settings.config")
+        public void Run(string settingsPath = "settings.config")
         {
             #region Setup logging
             var loggingConfig = new NLog.Config.LoggingConfiguration();
@@ -183,197 +148,12 @@ namespace RawLamAllocator
 
             Logger.Info("");
             Logger.Info("#############################################");
-            Logger.Info("Retrieving model...");
+            Logger.Info("Loading model...");
             Logger.Info("#############################################");
             Logger.Info("");
 
-
-            var boardsLog = System.IO.File.ReadAllLines(System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.BoardsDatabaseName + ".log"));
-            var elementsLog = System.IO.File.ReadAllLines(System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.ElementsDatabaseName + ".log"));
-
-            var account = Speckle.Core.Credentials.AccountManager.GetDefaultAccount();
-
-            Speckle.Core.Transports.ITransport boardsTransport, elementsTransport;
-            switch (Settings.BoardsSource)
-            {
-                case ("stream"):
-                    boardsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.BoardsDatabaseName);
-                    boardsTransport = new Speckle.Core.Transports.ServerTransport(account, Settings.BoardsStreamId);
-
-                    break;
-                default:
-                    boardsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.BoardsDatabaseName);
-                    Logger.Info("Established board transport at {0}", (boardsTransport as Speckle.Core.Transports.SQLiteTransport).RootPath);
-
-                    break;
-            }
-
-            switch (Settings.ElementsSource)
-            {
-                case ("stream"):
-                    //elementsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.ElementsDatabaseName);
-                    elementsTransport = new Speckle.Core.Transports.ServerTransport(account, Settings.ElementsStreamId);
-                    break;
-                default:
-                    elementsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.ElementsDatabaseName);
-                    Logger.Info("Established elements transport at {0}", (elementsTransport as Speckle.Core.Transports.SQLiteTransport).RootPath);
-
-                    break;
-            }
-
-            var resultsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, "results");
-
-
-            var boardsCommit = boardsLog[boardsLog.Length - 1].Trim();
-            var elementsCommit = elementsLog[elementsLog.Length - 1].Trim();
-
-            Speckle.Core.Models.Base boardsObj = null, elementsObj = null;
-            try
-            {
-                Logger.Info("Attempting to fetch commit '{0}'...", boardsCommit);
-                boardsObj = Task.Run(async () => await Speckle.Core.Api.Operations.Receive(boardsCommit, null, boardsTransport, disposeTransports: true)).Result;
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-            try
-            {
-                Logger.Info("Attempting to fetch commit '{0}'...", elementsCommit);
-                elementsObj = Task.Run(async () => await Speckle.Core.Api.Operations.Receive(elementsCommit, null, elementsTransport, disposeTransports: true)).Result;
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
-            Logger.Info(boardsObj);
-            Logger.Info(elementsObj);
-
-            Logger.Info("");
-            Logger.Info("#############################################");
-            Logger.Info("Iterating received logs...");
-            Logger.Info("#############################################");
-            Logger.Info("");
-
-            var converter = new Objects.Converter.RhinoGh.ConverterRhinoGh();
             var rhinoDoc = Rhino.RhinoDoc.CreateHeadless("");
-            rhinoDoc.ModelUnitSystem = Rhino.UnitSystem.Millimeters;
-            converter.SetContextDocument(rhinoDoc);
-
-            var board_meshes = new List<Rhino.Geometry.Mesh>();
-
-            if (boardsObj != null)
-            {
-                var speckleLogs = boardsObj["logs"] as List<object>;
-                foreach (Base speckleLog in speckleLogs)
-                {
-                    var logName = speckleLog["name"] as string;
-                    Logger.Info(logName);
-
-                    var infologPath = speckleLog["infolog_path"] as string;
-                    var gridPath = speckleLog["grid_path"] as string;
-
-                    var log = new RawLamb.Log();
-                    log.Name = logName;
-                    log.ReadInfoLog(infologPath);
-
-
-                    var loadedGrids = GridIO.Read(gridPath);
-
-                    if (loadedGrids.Length > 0)
-                        log.Grids["density"] = loadedGrids[0] as FloatGrid;
-
-                    var logPlane = converter.PlaneToNative(speckleLog["plane"] as Objects.Geometry.Plane);
-                    log.Plane = logPlane;
-
-
-                    Logger.Info("    {0:0.000}", logPlane);
-                    Logger.Info("    {0}", speckleLog["grid_path"]);
-                    Logger.Info("    {0}", speckleLog["infolog_path"]);
-
-                    var inputBoards = speckleLog["boards"] as List<object>;
-                    foreach (Base speckleBoard in inputBoards)
-                    {
-                        Logger.Info("      {0} numTop {1} numBottom {2}", speckleBoard["name"],
-                            (speckleBoard["outline_top"] as List<object>).Count,
-                            (speckleBoard["outline_bottom"] as List<object>).Count);
-                        Logger.Info("        {0:0.000}", speckleBoard["plane"]);
-
-                        var board = new RawLamb.Board();
-                        board.Name = speckleBoard["name"] as string;
-                        board.Plane = converter.PlaneToNative(speckleBoard["plane"] as Objects.Geometry.Plane);
-
-                        board_meshes.Add(converter.MeshToNative(speckleBoard["mesh"] as Objects.Geometry.Mesh) );
-
-                        foreach (Objects.Geometry.Polyline outline in speckleBoard["outline_top"] as List<object>)
-                        {
-                            var poly = converter.PolylineToNative(outline).ToPolyline();
-                            if (poly == null) Logger.Error("Failed to get polyline.");
-                            board.Top.Add(poly);
-                        }
-
-                        foreach (Objects.Geometry.Polyline outline in speckleBoard["outline_bottom"] as List<object>)
-                        {
-                            var poly = converter.PolylineToNative(outline).ToPolyline();
-                            if (poly == null) Logger.Error("Failed to get polyline.");
-                            board.Bottom.Add(poly);
-                        }
-
-                        board.Log = log;
-                        log.Boards.Add(board);
-
-                        BoardLogMap[board.Name] = log.Name;
-
-                        Boards.Add(board);
-
-                    }
-
-                    Logs[log.Name] = log;
-                    LogModels[log.Name] = new SimpleLogModel(Rhino.Geometry.Plane.WorldXY, 4200, 200, 200, 0.05, 0);
-                }
-            }
-
-            Logger.Info("");
-            Logger.Info("#############################################");
-            Logger.Info("Iterating received elements...");
-            Logger.Info("#############################################");
-            Logger.Info("");
-
-            var speckleElements = elementsObj["elements"] as List<object>;
-
-            if (elementsObj.GetDynamicMemberNames().Contains("supports"))
-            {
-                Logger.Info("Found supports.");
-                var speckleSupports = elementsObj["supports"] as List<object>;
-                foreach (Objects.Geometry.Mesh speckleSupport in speckleSupports)
-                {
-                    Supports.Add(converter.MeshToNative(speckleSupport));
-                }
-
-                Logger.Info("Added {0} support meshes.", Supports.Count);
-            }
-
-            var maxCount = Settings.DebugMaxElements;
-            int counter = 0;
-            foreach (Base element in speckleElements)
-            {
-                var notes = new List<string>();
-                var brep = converter.BrepToNative(element["geometry"] as Objects.Geometry.Brep, out notes);
-                var baseplane = converter.PlaneToNative(element["baseplane"] as Objects.Geometry.Plane);
-                var componentName = element["name"] as string;
-                Logger.Info("{0}    {1:0.000}    is solid: {2}", componentName, baseplane, brep.IsSolid);
-
-                Components.Add(new rlComponent(baseplane, brep, componentName));
-
-                World2LocalTransforms[componentName] = new Rhino.Geometry.Transform(Rhino.Geometry.Transform.PlaneToPlane(baseplane, Rhino.Geometry.Plane.WorldXY));
-
-                var attributes = new Rhino.DocObjects.ObjectAttributes();
-                attributes.Name = componentName;
-                rhinoDoc.Objects.AddBrep(brep, attributes);
-                counter++;
-                if (counter > maxCount) break;
-            }
+            LoadModel(rhinoDoc);
 
             #endregion
 
@@ -384,118 +164,11 @@ namespace RawLamAllocator
             Logger.Info("#############################################");
             Logger.Info("");
 
-            Dictionary<int, double[]> nodes;
-            Dictionary<int, int[]> elements;
-            Dictionary<int, int> elementTypes;
-
-            Dictionary<string, List<int>> nodeGroups;
-            Dictionary<string, List<Tuple<int, int>>> elementGroups;
-
-            double size_min = Settings.FeMeshSizeMin;
-            double size_max = Settings.FeMeshSizeMax;
-
-            DoMeshing(rhinoDoc, Components.Select(x => x.Geometry).ToList(), Components.Select(x => x.Name).ToList(), 
-                out nodes, out elements, out nodeGroups, out elementGroups, out elementTypes, size_min, size_max);
-
-            var model = new FeModel("EmaObservatory");
-            model.Properties.ModelSpace = ModelSpaceEnum.ThreeD;
-            model.Properties.ModelType = ModelType.GeneralModel;
-            model.UnitSystem = new CaeGlobals.UnitSystem(UnitSystemType.M_KG_S_C);
-
-            foreach (var kvp in nodes)
-            {
-                model.Mesh.Nodes.Add(kvp.Key, new FeNode(kvp.Key, kvp.Value));
-            }
-
-            foreach (var kvp in elements)
-            {
-                if (Array.IndexOf(kvp.Value, 0) > -1)
-                    Logger.Error("Zero index found: element {0} ({1})", kvp.Key, string.Join(", ", kvp.Value));
-
-                switch (elementTypes[kvp.Key])
-                {
-                    case (4):
-                        model.Mesh.Elements.Add(kvp.Key, new LinearTetraElement(kvp.Key, 1, kvp.Value));
-                        break;
-                    case (11):
-                        // Gmsh has the 9th and 10th node Ids the wrong way around for CalculiX... so swap them.
-                        var temp = kvp.Value[9];
-                        kvp.Value[9] = kvp.Value[8];
-                        kvp.Value[8] = temp;
-                        model.Mesh.Elements.Add(kvp.Key, new ParabolicTetraElement(kvp.Key, 1, kvp.Value));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            Logger.Info("FeModel nNodes: {0}", model.Mesh.Nodes.Count);
-            Logger.Info("FeModel nElements: {0}", model.Mesh.Elements.Count);
-
-
-            model.Mesh.Parts["MainPart"] =
-                new CaeMesh.MeshPart("MainPart", 1, nodes.Keys.ToArray(), elements.Keys.ToArray(), model.Mesh.Elements.Values.Select(x => x.GetType()).ToArray());
-
-            foreach (var egroup in elementGroups)
-            {
-
-                var eset = new FeElementSet(egroup.Key, egroup.Value.Select(x => x.Item2).Where(x => model.Mesh.Elements.ContainsKey(x)).ToArray());
-                model.Mesh.AddElementSet(eset);
-                Logger.Info("ElementSet: {0}", eset.Name);
-            }
-
-
-
-            Logger.Info("Creating material definition...");
-
-            var material = new CaeModel.Material("Spruce");
-            material.AddProperty(new EngineeringConstants(
-                new double[] { 9700e6, 400e6, 220e6 }, new double[] { 0.35, 0.6, 0.55 }, new double[] { 400e6, 250e6, 25e6 }));
-            material.AddProperty(new Density(new double[][] { new double[] { 450.0 } }));
-            model.Materials.Add(material.Name, material);
-
-            Logger.Info("Added material '{0}'", material);
-            Logger.Info("Adding material orientations...");
-            model.Mesh.ElementOrientations.Add(1, new FeMaterialOrientation(1, new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 }));
-            model.Mesh.ElementOrientations.Add(2, new FeMaterialOrientation(3, new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 }));
-            model.Mesh.ElementOrientations.Add(3, new FeMaterialOrientation(2, new double[] { 0, 0, 1 }, new double[] { 0, 1, 0 }));
-
-            // Make distribution
-            var distribution = new FeDistribution("dist", new FeMaterialOrientation(-1, 1, 0, 0, 0, 1, 0), model.Mesh.ElementOrientations.Select(x => x.Key).ToArray());
-            model.Mesh.Distributions.Add("dist", distribution);
-            var orientation = new FeOrientation("orientation", distribution);
-            model.Mesh.Orientations.Add(orientation.Name, orientation);
-
-            var section = new SolidSection("Section", material.Name, "MainPart", RegionTypeEnum.PartName, 10.0, false);
-            section.Orientation = orientation;
-            model.Sections.Add(section.Name, section);
-            Logger.Info("Added section '{0}'", section);
-
-            var gravityLoad = new GravityLoad("Gravity", "MainPart", RegionTypeEnum.PartName, 0, 0, -9.8, false, false, 0);
-
-            var step = new StaticStep("Step1", true);
-            step.AddLoad(gravityLoad);
-
-            var supportNodes = GetNodesOnMesh(rhinoDoc, model, Supports, step, 0.001);
-            //foreach (var entry in model.Mesh.Nodes)
-            //{
-                //if (entry.Value.Z < 0.001)
-                //    supportNodes.Add(entry.Value.Id);
-            //}
-
-            var supportNodeSet = new FeNodeSet("Supports", supportNodes.ToArray());
-            model.Mesh.NodeSets.Add(supportNodeSet.Name, supportNodeSet);
-            var supportBC = new FixedBC("Supports", supportNodeSet.Name, RegionTypeEnum.NodeSetName, false);
-
-
-
-            step.AddBoundaryCondition(supportBC);
-
-            model.StepCollection.AddStep(step, true);
+            var model = ConstructFeModel(rhinoDoc);
 
             #endregion
 
-            
+
             #region Offset, simplify, and get largest board outlines
             Logger.Info("");
             Logger.Info("#############################################");
@@ -656,14 +329,14 @@ namespace RawLamAllocator
 
                 if (shuffledSheets.Count > 0)
                 {
-
                     Rhino.Geometry.Transform[] transforms;
                     int[] sheetIds;
 
                     Logger.Info("Performing nesting...");
                     Logger.Info("Number of elements: {0}", testElements.Count);
                     Logger.Info("Number of boards:   {0}", shuffledSheets.Count);
-                    var fitness = PerformNesting(NestingSeed, testElements, shuffledSheets, out transforms, out sheetIds, 1);
+                    var nester = new Nesting(this);
+                    var fitness = nester.Run(NestingSeed, testElements, shuffledSheets, out transforms, out sheetIds, 1);
                     if (fitness == double.NaN)
                     {
                         Logger.Error("Nesting failed and returned garbage. Trying again...");
@@ -808,6 +481,7 @@ namespace RawLamAllocator
                     }
                 }
 
+                var distribution = model.Mesh.Distributions["dist"];
                 distribution.Labels = model.Mesh.ElementOrientations.Select(x => x.Key).ToArray();
 
                 model.Name = string.Format("EMA{0}", DateTime.UtcNow.ToString("yyMMddHHmmss"));
@@ -867,65 +541,8 @@ namespace RawLamAllocator
                 // Save in Speckle results database along with element placements on boards
 
                 var frd_path = System.IO.Path.Combine(outputDirectory, model.Name + ".frd");
-
-                FeResults results = null;
-                try
-                {
-                    results = FrdFileReader.Read(frd_path);
-
-                    var field_name = "U";
-                    var component_name = "ALL";
-                    if (!results.GetAllFieldNames().Contains(field_name))
-                        field_name = results.GetAllFieldNames().FirstOrDefault();
-                    if (field_name == null)
-                    {
-                        Logger.Error("Couldn't get any field names. Results are probably corrupt or job failed.");
-                    }
-                    else
-                    {
-
-                        if (!results.GetAllFiledNameComponentNames()[field_name].Contains(component_name))
-                            component_name = results.GetAllFiledNameComponentNames()[field_name].FirstOrDefault();
-
-                        var fieldData = results.GetFieldData(field_name, component_name, results.GetAllStepIds()[0], 1);
-
-                        var values = results.GetValues(fieldData, results.Mesh.Nodes.Keys.ToArray());
-
-                        currentMin = values.Min();
-                        currentMax = values.Max();
-
-                        // Compose results object
-
-                        var allocationResults = new AllocatorResults
-                        {
-                            ModelName = model.Name,
-                            FrdPath = frd_path,
-                            InpPath = inp_path,
-                            RhinoPath = rhino_path,
-                            MinDisplacement = currentMin,
-                            MaxDisplacement = currentMax
-                        };
-
-                        for (int i = 0; i < Components.Count; ++i)
-                        {
-                            allocationResults.ComponentNames.Add(Components[i].Name);
-                            allocationResults.ComponentTransforms.Add(new Objects.Other.Transform(Component2LogTransforms[Components[i].Name].ToFloatArray(true)));
-                            allocationResults.ComponentBoards.Add(ComponentBoardMap[Components[i].Name]);
-                            allocationResults.ComponentLogs.Add(BoardLogMap[ComponentBoardMap[Components[i].Name]]);
-                        }
-
-                        // Send results object to database
-                        var resString = Task.Run(async () => await Speckle.Core.Api.Operations.Send(allocationResults, new List<Speckle.Core.Transports.ITransport> { resultsTransport }, false)).Result;
-                        // Write to simulation commit file
-                        var resultsLogPath = System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, "results.log");
-                        System.IO.File.AppendAllLines(resultsLogPath, new string[] { resString });
-                    }
-                }
-                catch(Exception e)
-                {
-                    Logger.Error(e);
-                    continue;
-                }
+                var results = new Results(this);
+                results.Run(frd_path, inp_path, rhino_path, ref currentMin, ref currentMax, model);
 
                 // Increment iteration counter and go again...
                 totalIterations++;

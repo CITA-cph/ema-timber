@@ -8,10 +8,17 @@ using System.Threading.Tasks;
 
 namespace RawLamAllocator
 {
-    internal partial class Allocator
+    internal class Nesting
     {
+        private Allocator m_alloc;
+        internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static double PerformNesting(int seed, IList<Polyline> elements, IList<Polyline> sheets, out Transform[] transforms, out int[] sheetIds, int iterations)
+        public Nesting(Allocator alloc)
+        {
+            m_alloc = alloc;
+        }
+
+        public double Run(int seed, IList<Polyline> elements, IList<Polyline> sheets, out Transform[] transforms, out int[] sheetIds, int iterations)
         {
             transforms = new Transform[elements.Count];
             sheetIds = new int[elements.Count];

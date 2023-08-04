@@ -56,10 +56,12 @@ namespace RawLamAllocator
         {
             using (new RhinoCore(args))
             {
+                var alloc = new Allocator();
+
                 if (args.Length > 0)
-                    Allocator.Run(args[0]);
+                    alloc.Run(args[0]);
                 else
-                    Allocator.Run();
+                    alloc.Run();
             }
         }
     }
