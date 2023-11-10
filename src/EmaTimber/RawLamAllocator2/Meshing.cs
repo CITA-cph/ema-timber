@@ -1,14 +1,11 @@
-﻿using Rhino;
+﻿using GmshCommon;
+using Grasshopper;
+using Rhino;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using GmshCommon;
 using Pair = System.Tuple<int, int>;
-using Grasshopper;
 
 namespace RawLamAllocator
 {
@@ -38,6 +35,9 @@ namespace RawLamAllocator
             {
                 Gmsh.InitializeGmsh();
                 Gmsh.Logger.Start();
+
+                //Gmsh.SetNumber("Geometry.Tolerance", 1e-08);
+                //Gmsh.SetNumber("Geometry.ToleranceBoolean", 1e-05);
 
                 Gmsh.Clear();
                 Pair[] dimTags;
@@ -97,13 +97,16 @@ namespace RawLamAllocator
                 Gmsh.SetNumber("Mesh.MeshSizeMax", sizeMax);
 
                 Gmsh.SetNumber("Mesh.MeshSizeFromCurvature", 12);
+                Gmsh.SetNumber("Mesh.Optimize", 1);
 
 
                 Gmsh.SetNumber("Mesh.SaveGroupsOfElements", -1001);
                 Gmsh.SetNumber("Mesh.SaveGroupsOfNodes", 2);
-                Gmsh.SetNumber("Mesh.ElementOrder", 2);
+                //Gmsh.SetNumber("Mesh.ElementOrder", 2);
                 Gmsh.SetNumber("Mesh.SecondOrderLinear", 1);
                 Gmsh.SetNumber("Mesh.HighOrderOptimize", 1);
+                //Gmsh.SetNumber("Mesh.AngleToleranceFacetOverlap", 0.1);
+                Gmsh.SetNumber("Mesh.MeshSizeExtendFromBoundary", 1);
 
                 //Gmsh.SetNumber("Mesh.Algorithm3D", 4);
 
@@ -256,7 +259,11 @@ namespace RawLamAllocator
 
             dimTags = Gmsh.OCC.GetEntities(3);
 
-            if (dimTags.Length != breps.Count) throw new Exception("Imported entity count does not match exported object count.");
+            if (dimTags.Length != breps.Count)
+            {
+                doc.SaveAs("C:/tmp/gmsh_fail.3dm");
+                throw new Exception("Imported entity count does not match exported object count.");
+            }
 
             tags3d = new int[breps.Count];
             for (int i = 0; i < tags3d.Length; ++i)

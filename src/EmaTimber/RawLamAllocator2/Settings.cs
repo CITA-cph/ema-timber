@@ -60,7 +60,10 @@ namespace RawLamAllocator
 
         [XmlElement("debug_max_elements")]
         public int DebugMaxElements { get; set; }
-        
+
+        [XmlElement("debug_log_space")]
+        public int DebugLogSpace { get; set; }
+
         public Settings() 
         {
             ProjectDirectory = "";
@@ -74,6 +77,7 @@ namespace RawLamAllocator
             FeMeshSizeMin = 1.0;
             FeMeshSizeMax = 20.0;
             DebugMaxElements = int.MaxValue;
+            DebugLogSpace = 0;
             GlobalSeed = 7777;
         }
 

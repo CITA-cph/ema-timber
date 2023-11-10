@@ -1,6 +1,7 @@
 ﻿using DeepSight;
 using RawLamb;
 using Rhino;
+using Rhino.Geometry;
 using Speckle.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,18 @@ namespace RawLamAllocator
         {
             var boardsLog = System.IO.File.ReadAllLines(System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.BoardsDatabaseName + ".log"));
             var elementsLog = System.IO.File.ReadAllLines(System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, Settings.ElementsDatabaseName + ".log"));
+
+            var boardIgnorePath = System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, "boards.ignore");
+            if (System.IO.File.Exists(boardIgnorePath))
+            {
+                BoardIgnore.AddRange(System.IO.File.ReadAllLines(boardIgnorePath));
+            }
+
+            var elementIgnorePath = System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, "elements.ignore");
+            if (System.IO.File.Exists(elementIgnorePath))
+            {
+                ElementIgnore.AddRange(System.IO.File.ReadAllLines(elementIgnorePath));
+            }
 
             var account = Speckle.Core.Credentials.AccountManager.GetDefaultAccount();
 
@@ -46,8 +59,6 @@ namespace RawLamAllocator
 
                     break;
             }
-
-
 
             var boardsCommit = boardsLog[boardsLog.Length - 1].Trim();
             var elementsCommit = elementsLog[elementsLog.Length - 1].Trim();
@@ -85,13 +96,18 @@ namespace RawLamAllocator
             rhinoDoc.ModelUnitSystem = Rhino.UnitSystem.Millimeters;
             converter.SetContextDocument(rhinoDoc);
 
-            var board_meshes = new List<Rhino.Geometry.Mesh>();
+            //var board_meshes = new List<Rhino.Geometry.Mesh>();
 
             if (boardsObj != null)
             {
                 var speckleLogs = boardsObj["logs"] as List<object>;
                 foreach (Base speckleLog in speckleLogs)
                 {
+                    if (speckleLog == null)
+                    {
+                        Logger.Error("Found null log. Skipping.");
+                        continue;
+                    }
                     var logName = speckleLog["name"] as string;
                     Logger.Info(logName);
 
@@ -119,21 +135,28 @@ namespace RawLamAllocator
                     var inputBoards = speckleLog["boards"] as List<object>;
                     foreach (Base speckleBoard in inputBoards)
                     {
-                        Logger.Info("      {0} numTop {1} numBottom {2}", speckleBoard["name"],
+                        var boardName = speckleBoard["name"] as string;
+                        if (BoardIgnore.Contains(boardName))
+                        {
+                            Logger.Info("    Ignoring board {0}", boardName);
+                            continue;
+                        }
+                        Logger.Info("      {0} numTop {1} numBottom {2}", boardName,
                             (speckleBoard["outline_top"] as List<object>).Count,
                             (speckleBoard["outline_bottom"] as List<object>).Count);
                         Logger.Info("        {0:0.000}", speckleBoard["plane"]);
 
                         var board = new RawLamb.Board();
-                        board.Name = speckleBoard["name"] as string;
+                        board.Name = boardName;
                         board.Plane = converter.PlaneToNative(speckleBoard["plane"] as Objects.Geometry.Plane);
 
-                        board_meshes.Add(converter.MeshToNative(speckleBoard["mesh"] as Objects.Geometry.Mesh));
+                        //board_meshes.Add(converter.MeshToNative(speckleBoard["mesh"] as Objects.Geometry.Mesh));
 
                         foreach (Objects.Geometry.Polyline outline in speckleBoard["outline_top"] as List<object>)
                         {
                             var poly = converter.PolylineToNative(outline).ToPolyline();
                             if (poly == null) Logger.Error("Failed to get polyline.");
+                            poly.MergeColinearSegments(0.01, true);
                             board.Top.Add(poly);
                         }
 
@@ -141,6 +164,7 @@ namespace RawLamAllocator
                         {
                             var poly = converter.PolylineToNative(outline).ToPolyline();
                             if (poly == null) Logger.Error("Failed to get polyline.");
+                            poly.MergeColinearSegments(0.01, true);
                             board.Bottom.Add(poly);
                         }
 
@@ -172,6 +196,11 @@ namespace RawLamAllocator
                 var speckleSupports = elementsObj["supports"] as List<object>;
                 foreach (Objects.Geometry.Mesh speckleSupport in speckleSupports)
                 {
+                    if (speckleSupport == null)
+                    {
+                        Logger.Error("Found null support. Skipping.");
+                        continue;
+                    }
                     Supports.Add(converter.MeshToNative(speckleSupport));
                 }
 
@@ -182,19 +211,49 @@ namespace RawLamAllocator
             int counter = 0;
             foreach (Base element in speckleElements)
             {
+                var componentName = element["name"] as string;
+
+                if (ElementIgnore.Contains(componentName))
+                {
+                    Logger.Info("    Ignoring board {0}", componentName);
+                    continue;
+                }
+
                 var notes = new List<string>();
                 var brep = converter.BrepToNative(element["geometry"] as Objects.Geometry.Brep, out notes);
+
+                // Shrink all faces
+                brep.Faces.ShrinkFaces();
+                brep.MergeCoplanarFaces(0.001);
+
                 var baseplane = converter.PlaneToNative(element["baseplane"] as Objects.Geometry.Plane);
-                var componentName = element["name"] as string;
+
                 Logger.Info("{0}    {1:0.000}    is solid: {2}", componentName, baseplane, brep.IsSolid);
 
-                Components.Add(new rlComponent(baseplane, brep, componentName));
+                var component = new rlComponent(baseplane, brep, componentName);
+                if (element.GetDynamicMemberNames().Contains("drillings"))
+                {
+                    var drillings = element["drillings"] as List<object>;
+                    foreach (Base drilling in drillings)
+                    {
+
+                        if (drilling == null)
+                        {
+                            Logger.Error("Null drilling in element {0}", component.Name);
+                            continue;
+                        }
+                        Line axis = converter.LineToNative(drilling["axis"] as Objects.Geometry.Line).Line;
+                        double diameter = (double)drilling["diameter"];
+
+                        component.Objects.Add(new Drilling { Axis = axis, Diameter = diameter });
+                    }
+                }
+
+                Components.Add(component);
 
                 World2LocalTransforms[componentName] = new Rhino.Geometry.Transform(Rhino.Geometry.Transform.PlaneToPlane(baseplane, Rhino.Geometry.Plane.WorldXY));
 
-                var attributes = new Rhino.DocObjects.ObjectAttributes();
-                attributes.Name = componentName;
-                rhinoDoc.Objects.AddBrep(brep, attributes);
+                rhinoDoc.Objects.AddBrep(brep, new Rhino.DocObjects.ObjectAttributes { Name = componentName});
                 counter++;
                 if (counter > maxCount) break;
             }

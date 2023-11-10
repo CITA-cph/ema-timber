@@ -39,9 +39,11 @@
     </Reference>
     <Reference Include="DeepSightNet">
       <HintPath>..\..\..\..\deep-sight\bin\DeepSightNet.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DeepSightRhino">
       <HintPath>..\..\..\..\deep-sight\bin\DeepSightRhino.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>..\packages\RhinoCommon.7.31.23166.15001\lib\net48\Eto.dll</HintPath>
@@ -49,6 +51,7 @@
     </Reference>
     <Reference Include="GluLamb">
       <HintPath>..\..\..\..\glulamb\bin\GluLamb.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Rhino.UI, Version=7.31.23166.15001, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>..\packages\RhinoCommon.7.31.23166.15001\lib\net48\Rhino.UI.dll</HintPath>
@@ -70,6 +73,7 @@
   <ItemGroup>
     <Compile Include="Board.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="Elements\BracedBeam.cs" />
     <Compile Include="Functions.cs" />
     <Compile Include="Geometry.cs" />
     <Compile Include="Knot.cs" />

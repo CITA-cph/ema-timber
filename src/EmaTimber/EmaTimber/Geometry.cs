@@ -176,7 +176,7 @@ namespace RawLamb
         /// </summary>
         /// <param name="brep">Input Brep.</param>
         /// <returns>A baseplane for the Brep.</returns>
-        public static Plane FindBestBasePlane(Brep brep, Vector3d optx)
+        public static Plane FindBestBasePlane(Brep brep, Vector3d optx, double linearTolerance = 0.001, double dotTolerance = 0.1)
         {
             Vector3d vec = Vector3d.XAxis;
             Vector3d xaxis = Vector3d.XAxis, zaxis = Vector3d.ZAxis;
@@ -192,7 +192,7 @@ namespace RawLamb
 
                 foreach (var edge in brep.Edges)
                 {
-                    if (edge.IsLinear())
+                    if (edge.IsLinear(linearTolerance))
                     {
                         xaxis = edge.TangentAtStart;
                         xaxis *= edge.GetLength();
@@ -211,7 +211,7 @@ namespace RawLamb
                 xaxis = edge_vectors[min_index];
             }
 
-            zaxis = GetBestCrossVector(brep, xaxis);
+            zaxis = GetBestCrossVector(brep, xaxis, dotTolerance);
 
             plane = new Plane(Point3d.Origin, xaxis, Vector3d.CrossProduct(zaxis, xaxis));
 
@@ -230,11 +230,9 @@ namespace RawLamb
         /// <param name="fwd">Main direction.</param>
         /// <returns>A perpendicular direction that is normal to the largest, flattest face of the Brep.</returns>
         /// <exception cref="Exception"></exception>
-        public static Vector3d GetBestCrossVector(Brep brep, Vector3d fwd)
+        public static Vector3d GetBestCrossVector(Brep brep, Vector3d fwd, double tolerance=0.1)
         {
             var candidates = new List<Tuple<double, double, BrepFace, Vector3d>>();
-            var tolerance = RhinoMath.ZeroTolerance;
-            tolerance = 0.1;
 
             for (int i = 0; i < brep.Faces.Count; ++i)
             {

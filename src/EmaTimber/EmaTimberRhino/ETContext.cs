@@ -9,6 +9,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.NetworkInformation;
 using PacketDotNet;
+using System.Net;
+using Rhino;
+using EmaTimberRhino;
+using Rhino.Display;
 
 namespace EmaTimber
 {
@@ -22,13 +26,59 @@ namespace EmaTimber
         public static Point3d LastCncPosition;
         public static Point3d LaserPoint;
 
+        public static string LaserPort = "COM5";
+        public static string CncFriendlyName = "";
+        public static PhysicalAddress CncAddress = null;
+
         internal static PointCloudTracingContext PointCloudContext = new PointCloudTracingContext();
+        internal static SimulationContext SimulationContext = new SimulationContext();
 
         public static OD2Interface DistanceSensor;
+
+        public static DisplayMaterial MeshMaterial = new DisplayMaterial();
 
         public static void FindDevice(PhysicalAddress address)
         {
             CncConnection = GetPcapDevice(address);
+        }
+
+        public static List<Tuple<string,PhysicalAddress>> GetAvailablePcapDeviceNames()
+        {
+            var pcapInterfaces = PcapInterface.GetAllPcapInterfaces();
+
+            var interfaces = new List<Tuple<string, PhysicalAddress>>();
+
+            foreach (var inf in pcapInterfaces)
+            {
+                if (inf.MacAddress == null || string.IsNullOrEmpty(inf.FriendlyName)) continue;
+
+                interfaces.Add(new Tuple<string, PhysicalAddress>(inf.FriendlyName, inf.MacAddress));
+
+            }
+
+            return interfaces;
+        }
+
+        public static LibPcapLiveDevice GetPcapDevice(string friendlyName)
+        {
+
+            var interfaces = PcapInterface.GetAllPcapInterfaces();
+            var inf = interfaces.FirstOrDefault(ni => ni.Name == friendlyName);
+            if (inf == null) throw new Exception("Failed to find interface " + friendlyName + ".");
+
+            var device = new LibPcapLiveDevice(inf);
+            LinkLayers link;
+            try
+            {
+                device.Open();
+                link = device.LinkType;
+            }
+            catch (PcapException ex)
+            {
+                RhinoApp.WriteLine(ex.Message);
+            }
+
+            return device;
         }
 
         public static LibPcapLiveDevice GetPcapDevice(PhysicalAddress address = null)
@@ -86,7 +136,10 @@ namespace EmaTimber
             BoundingBox bb = new BoundingBox();
             bb.Union(CncPosition);
             bb.Union(LaserPoint);
-            bb.Union(PointCloudContext.Cloud.GetBoundingBox(false));
+            if (PointCloudContext.Cloud != null)
+                bb.Union(PointCloudContext.Cloud.GetBoundingBox(false));
+            if (SimulationContext.SimulationMesh != null)
+                bb.Union(SimulationContext.SimulationMesh.GetBoundingBox(true));
 
             e.IncludeBoundingBox(bb);
         }
@@ -127,8 +180,21 @@ namespace EmaTimber
 
             // Draw point cloud
 
-            if (PointCloudContext != null)
+            if (PointCloudContext != null && PointCloudContext.Cloud != null)
                 e.Display.DrawPointCloud(PointCloudContext.Cloud, 1);
+
+            if (SimulationContext != null)
+            {
+                foreach (var part in SimulationContext.Parts)
+                {
+                    if (part.Value.Mesh != null)
+                    {
+                        e.Display.DrawMeshShaded(part.Value.Mesh, part.Value.Material);
+                        e.Display.DrawMeshWires(part.Value.Mesh, System.Drawing.Color.DarkGray, 1);
+
+                    }
+                }
+            }
 
         }
     }

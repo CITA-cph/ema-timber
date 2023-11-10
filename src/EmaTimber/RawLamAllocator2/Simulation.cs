@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GmshCommon;
 
 namespace RawLamAllocator
 {
@@ -26,15 +27,29 @@ namespace RawLamAllocator
 
             double size_min = Settings.FeMeshSizeMin;
             double size_max = Settings.FeMeshSizeMax;
-
-            var mesher = new Meshing(this);
-            mesher.Run(rhinoDoc, Components.Select(x => x.Geometry).ToList(), Components.Select(x => x.Name).ToList(),
-                out nodes, out elements, out nodeGroups, out elementGroups, out elementTypes, size_min, size_max);
-
             var model = new FeModel("EmaObservatory");
             model.Properties.ModelSpace = ModelSpaceEnum.ThreeD;
             model.Properties.ModelType = ModelType.GeneralModel;
             model.UnitSystem = new CaeGlobals.UnitSystem(UnitSystemType.M_KG_S_C);
+
+            var mesher = new Meshing(this);
+            try
+            {
+                mesher.Run(rhinoDoc, Components.Select(x => x.Geometry).ToList(), Components.Select(x => x.Name).ToList(),
+                    out nodes, out elements, out nodeGroups, out elementGroups, out elementTypes, size_min, size_max);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(Gmsh.Logger.GetLastError());
+                Logger.Error("");
+                Logger.Error("");
+                Logger.Error("Meshing failed. Continuing to allocation, but don't expect any results.");
+                Logger.Error("");
+                Logger.Error("");
+
+                //throw (ex);
+                return model;
+            }
 
             foreach (var kvp in nodes)
             {
@@ -122,6 +137,7 @@ namespace RawLamAllocator
 
             model.StepCollection.AddStep(step, true);
 
+            ValidMesh = true;
             return model;
         }
 

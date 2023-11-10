@@ -18,6 +18,10 @@ using CaeMesh;
 
 using RawLamb;
 using Rhino;
+using FileInOut.Input;
+using Rhino.Input.Custom;
+using System.Windows.Forms;
+using CaeResults;
 
 namespace RawLamAllocator
 {
@@ -42,6 +46,12 @@ namespace RawLamAllocator
         public Dictionary<string, string> BoardLogMap = new Dictionary<string, string>();
 
         public Dictionary<string, LogModel> LogModels = new Dictionary<string, LogModel>();
+
+        // List of elements and boards to ignore
+        public List<string> ElementIgnore = new List<string>();
+        public List<string> BoardIgnore = new List<string>();
+
+        public bool ValidMesh { get; private set; } = false;
 
 
         public Settings Settings;
@@ -155,6 +165,19 @@ namespace RawLamAllocator
             var rhinoDoc = Rhino.RhinoDoc.CreateHeadless("");
             LoadModel(rhinoDoc);
 
+            if (Components.Count < 1)
+            {
+                Logger.Fatal("No components loaded!");
+                Console.ReadKey();
+                return;
+            }
+            if (Boards.Count < 1)
+            {
+                Logger.Fatal("No boards loaded!");
+                Console.ReadKey();
+                return;
+            }
+
             #endregion
 
             #region Construct FE model
@@ -181,8 +204,8 @@ namespace RawLamAllocator
             foreach (var board in Boards)
             {
                 var allOutlines = new List<Polyline>();
-                allOutlines.AddRange(board.Top);
-                allOutlines.AddRange(board.Bottom);
+                allOutlines.AddRange(board.Top.Select(x => x.Duplicate()));
+                allOutlines.AddRange(board.Bottom.Select(x => x.Duplicate()));
 
                 for (int i = 0; i < allOutlines.Count; ++i)
                     allOutlines[i].Transform(Rhino.Geometry.Transform.PlaneToPlane(board.Plane, Rhino.Geometry.Plane.WorldXY));
@@ -361,26 +384,140 @@ namespace RawLamAllocator
 
                     foreach (var kvp in sheetMap)
                     {
+                        var board = Boards[kvp.Key];
+
                         var ids = new List<Guid>();
                         var layer = new Rhino.DocObjects.Layer();
 
-                        var board = Boards[kvp.Key];
-                        layer.Name = board.Name;
-                        layer.Color = System.Drawing.Color.FromArgb(rand.Next(155) + 100, rand.Next(155) + 100, rand.Next(155) + 100);
+                        var rhinoBoard = RhinoDoc.CreateHeadless("");
 
-                        var layerIndex = rhinoDoc.Layers.Add(layer);
+                        var layerBoard = new Layer();
+                        layerBoard.Name = "Board";
+                        var layerBoardIndex = rhinoBoard.Layers.Add(layerBoard);
+
+                        var layerPlate = new Layer();
+                        layerPlate.Name = "Plate";
+                        var layerPlateIndex = rhinoBoard.Layers.Add(layerPlate);
+
+                        var layerBoardTop = new Layer();
+                        layerBoardTop.Name = "BoardOutlineTop";
+                        layerBoardTop.Color = System.Drawing.Color.Red;
+                        layerBoardTop.ParentLayerId = rhinoBoard.Layers.FindIndex(layerBoardIndex).Id;
+                        var layerBoardTopIndex = rhinoBoard.Layers.Add(layerBoardTop);
+
+                        var layerBoardBottom = new Layer();
+                        layerBoardBottom.Name = "BoardOutlineBottom";
+                        layerBoardBottom.Color = System.Drawing.Color.Blue;
+                        layerBoardBottom.ParentLayerId = rhinoBoard.Layers.FindIndex(layerBoardIndex).Id;
+                        var layerBoardBottomIndex = rhinoBoard.Layers.Add(layerBoardBottom);
+
+                        var layerComponents = new Layer();
+                        layerComponents.Name = "Components";
+                        var layerComponentsIndex = rhinoBoard.Layers.Add(layerComponents);
+
+                        var layerTopOutline = new Layer();
+                        layerTopOutline.Name = "TopOutline";
+                        layerTopOutline.Color = System.Drawing.Color.Red;
+                        layerTopOutline.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerTopOutlineIndex = rhinoBoard.Layers.Add(layerTopOutline);
+
+                        var layerTopOutlineInner = new Layer();
+                        layerTopOutlineInner.Name = "TopOutlineInner";
+                        layerTopOutlineInner.Color = System.Drawing.Color.Red;
+                        layerTopOutlineInner.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerTopOutlineInnerIndex = rhinoBoard.Layers.Add(layerTopOutlineInner);
+
+                        var layerBottomOutline = new Layer();
+                        layerBottomOutline.Name = "BottomOutline";
+                        layerBottomOutline.Color = System.Drawing.Color.Lime;
+                        layerBottomOutline.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerBottomOutlineIndex = rhinoBoard.Layers.Add(layerBottomOutline);
+
+                        var layerBottomOutlineInner = new Layer();
+                        layerBottomOutlineInner.Name = "BottomOutlineInner";
+                        layerBottomOutlineInner.Color = System.Drawing.Color.Lime;
+                        layerBottomOutlineInner.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerBottomOutlineInnerIndex = rhinoBoard.Layers.Add(layerBottomOutlineInner);
+
+                        var layerBrep = new Layer();
+                        layerBrep.Name = "Solids";
+                        layerBrep.Color = System.Drawing.Color.Black;
+                        layerBrep.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerBrepIndex = rhinoBoard.Layers.Add(layerBrep);
+
+                        var layerDrill6mm = new Layer();
+                        layerDrill6mm.Name = "Drill 6mm";
+                        layerDrill6mm.Color = System.Drawing.Color.Pink;
+                        layerDrill6mm.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerDrill6mmIndex = rhinoBoard.Layers.Add(layerDrill6mm);
+
+                        var layerDrill12mm = new Layer();
+                        layerDrill12mm.Name = "Drill 12mm";
+                        layerDrill12mm.Color = System.Drawing.Color.Purple;
+                        layerDrill12mm.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerDrill12mmIndex = rhinoBoard.Layers.Add(layerDrill12mm);
+
+                        var layerSurfaces = new Layer();
+                        layerSurfaces.Name = "Surfaces";
+                        layerSurfaces.Color = System.Drawing.Color.Orange;
+                        layerSurfaces.ParentLayerId = rhinoBoard.Layers.FindIndex(layerComponentsIndex).Id;
+                        var layerSurfacesIndex = rhinoBoard.Layers.Add(layerSurfaces);
 
                         var board2logWorld = Rhino.Geometry.Transform.PlaneToPlane(Rhino.Geometry.Plane.WorldXY, board.Plane);
                         var logWorld2logLocal = Rhino.Geometry.Transform.PlaneToPlane(board.Log.Plane, Rhino.Geometry.Plane.WorldXY);
 
-                        var attributes = new Rhino.DocObjects.ObjectAttributes();
-                        attributes.LayerIndex = layerIndex;
-
                         var boardOutline = sheets[kvp.Key].Duplicate();
-                        boardOutline.Transform(board2logWorld);
-                        boardOutline.Transform(logWorld2logLocal);
 
-                        ids.Add(rhinoDoc.Objects.AddPolyline(boardOutline, attributes));
+                        if (Settings.DebugLogSpace > 0)
+                        {
+                            boardOutline.Transform(board2logWorld);
+                            boardOutline.Transform(logWorld2logLocal);
+                        }
+
+                        rhinoBoard.Objects.AddRectangle(new Rectangle3d(Rhino.Geometry.Plane.WorldXY, 4880, 400), new ObjectAttributes { Name = "Plate", LayerIndex = layerPlateIndex });
+
+                        //ids.Add(rhinoBoard.Objects.AddPolyline(boardOutline, new ObjectAttributes { LayerIndex = layerBoardTopIndex }));
+                        Rhino.Geometry.Plane topPlane = Rhino.Geometry.Plane.Unset, bottomPlane = Rhino.Geometry.Plane.Unset;
+
+                        foreach (var pl in board.Top)
+                        {
+                            var outline = pl.Duplicate();
+                            outline.Transform(Rhino.Geometry.Transform.PlaneToPlane(board.Plane, Rhino.Geometry.Plane.WorldXY));
+
+                            if (Settings.DebugLogSpace > 0)
+                            {
+                                outline.Transform(board2logWorld);
+                                outline.Transform(logWorld2logLocal);
+                            }
+
+                            if (!topPlane.IsValid)
+                            {
+                                outline.ToNurbsCurve().TryGetPlane(out topPlane);
+                            }
+
+                            rhinoBoard.Objects.AddPolyline(outline, new ObjectAttributes { Name=board.Name, LayerIndex = layerBoardTopIndex });
+                        }
+
+                        foreach (var pl in board.Bottom)
+                        {
+                            var outline = pl.Duplicate();
+                            outline.Transform(Rhino.Geometry.Transform.PlaneToPlane(board.Plane, Rhino.Geometry.Plane.WorldXY));
+
+                            if (Settings.DebugLogSpace > 0)
+                            {
+                                outline.Transform(board2logWorld);
+                                outline.Transform(logWorld2logLocal);
+                            }
+
+                            if (!bottomPlane.IsValid)
+                            {
+                                outline.ToNurbsCurve().TryGetPlane(out bottomPlane);
+                            }
+
+
+                            rhinoBoard.Objects.AddPolyline(outline, new ObjectAttributes { Name = board.Name, LayerIndex = layerBoardBottomIndex });
+                        }
+
                         foreach (var ele in kvp.Value)
                         {
                             if (!transforms[ele].IsValid)
@@ -389,112 +526,220 @@ namespace RawLamAllocator
                                 //continue;
                             }
 
-                            var element = testElements[ele].Duplicate();
-                            element.Transform(transforms[ele]);
-                            element.Transform(board2logWorld);
-                            element.Transform(logWorld2logLocal);
-
                             var component2logTransform = logWorld2logLocal * board2logWorld * transforms[ele] * Rhino.Geometry.Transform.PlaneToPlane(Components[ele].Plane, Rhino.Geometry.Plane.WorldXY);
+                            var component2boardTransform = transforms[ele] * Rhino.Geometry.Transform.PlaneToPlane(Components[ele].Plane, Rhino.Geometry.Plane.WorldXY);
 
                             var geo = Components[ele].Geometry.DuplicateBrep();
 
-                            geo.Transform(component2logTransform);
+                            var plane = Components[ele].Plane;
 
-                            attributes.Name = Components[ele].Name;
+                            if (Settings.DebugLogSpace > 0)
+                            {
+                                geo.Transform(component2logTransform);
+                                plane.Transform(component2logTransform);
+                            }
+                            else
+                            {
+                                geo.Transform(component2boardTransform);
+                                plane.Transform(component2boardTransform);
+                            }
 
                             Component2LogTransforms[Components[ele].Name] = component2logTransform;
                             PlacementTransforms[Components[ele].Name] = transforms[ele];
                             ComponentBoardMap[Components[ele].Name] = board.Name;
 
-                            ids.Add(rhinoDoc.Objects.AddPolyline(element, attributes));
-                            ids.Add(rhinoDoc.Objects.AddBrep(geo, attributes));
+                            foreach (var face in geo.Faces)
+                            {
+                                var normal = face.NormalAt(face.Domain(0).Mid, face.Domain(1).Mid);
+                                var dot = normal * plane.ZAxis;
+                                if ((1 - Math.Abs(dot)) < 0.00001)
+                                {
+                                    var top = dot > 0;
+                                    //top ^= face.OrientationIsReversed;
+
+                                    if (top)
+                                    {
+                                        var outer = face.OuterLoop;
+                                        rhinoBoard.Objects.AddCurve(outer.To3dCurve(), new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerTopOutlineInnerIndex });
+                                        foreach (var loop in face.Loops)
+                                        {
+                                            if (loop.LoopIndex == outer.LoopIndex) continue;
+                                            rhinoBoard.Objects.AddCurve(loop.To3dCurve(), new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerTopOutlineIndex });
+                                        }
+                                        /*
+                                        rhinoBoard.Objects.AddLine(new Line(plane.Origin, normal, 100.0), new ObjectAttributes
+                                        {
+                                            Name = Components[ele].Name,
+                                            LayerIndex = layerTopOutlineIndex,
+                                            ObjectDecoration = ObjectDecoration.EndArrowhead
+                                        });
+                                        */
+                                    }
+                                    else
+                                    {
+                                        var outer = face.OuterLoop;
+                                        rhinoBoard.Objects.AddCurve(outer.To3dCurve(), new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerTopOutlineInnerIndex });
+                                        foreach (var loop in face.Loops)
+                                        {
+                                            if (loop.LoopIndex == outer.LoopIndex) continue;
+                                            rhinoBoard.Objects.AddCurve(loop.To3dCurve(), new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerBottomOutlineIndex });
+                                        }
+                                        /*
+                                        rhinoBoard.Objects.AddLine(new Line(plane.Origin, normal, 100.0), new ObjectAttributes
+                                        {
+                                            Name = Components[ele].Name,
+                                            LayerIndex = layerBottomOutlineIndex,
+                                            ObjectDecoration = ObjectDecoration.EndArrowhead
+                                        });
+                                        */
+                                    }
+                                }
+                            }
+
+                            foreach (var ol in Components[ele].Outline)
+                            {
+                                var outline = ol.Duplicate();
+                                outline.Transform(transforms[ele]);
+
+                                if (Settings.DebugLogSpace > 0)
+                                {
+                                    outline.Transform(board2logWorld);
+                                    outline.Transform(logWorld2logLocal);
+                                }
+                                //ids.Add(rhinoBoard.Objects.AddPolyline(outline, new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerTopOutlineIndex }));
+                            }
+
+                            foreach (Drilling drilling in Components[ele].Objects)
+                            {
+                                var axis = drilling.Axis;
+
+                                if (Settings.DebugLogSpace > 0)
+                                    axis.Transform(component2logTransform);
+                                else
+                                    axis.Transform(component2boardTransform);
+
+                                Rhino.Geometry.Intersect.Intersection.LinePlane(axis, topPlane, out double t0);
+                                Rhino.Geometry.Intersect.Intersection.LinePlane(axis, bottomPlane, out double t1);
+
+                                axis = new Line(axis.PointAt(t0), axis.PointAt(t1));
+
+                                if (RhinoMath.EpsilonEquals(drilling.Diameter, 6.0, 1e-10))
+                                    rhinoBoard.Objects.AddLine(axis, new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerDrill6mmIndex });
+                                else if (RhinoMath.EpsilonEquals(drilling.Diameter, 12.0, 1e-10))
+                                    rhinoBoard.Objects.AddLine(axis, new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerDrill12mmIndex });
+
+                            }
+
+                            ids.Add(rhinoBoard.Objects.AddBrep(geo, new ObjectAttributes { Name = Components[ele].Name, LayerIndex = layerBrepIndex, WireDensity = -1 }));
                         }
 
+                        rhinoBoard.Write3dmFile(System.IO.Path.Combine(Settings.ProjectDirectory, "fabrication", board.Name + ".3dm"), new Rhino.FileIO.FileWriteOptions { FileVersion = 5 });
                         //rhinoDoc.Groups.Add(boards[kvp.Key].Name, ids);
                     }
                 }
                 #endregion
 
+
                 #region Set material orientations in FE model
 
-                model.Mesh.ElementOrientations.Clear();
-
-                foreach (var component in Components)
+                if (ValidMesh)
                 {
-                    Rhino.Geometry.Transform xform = Component2LogTransforms[component.Name];
-                    Rhino.Geometry.Transform inv;
-                    var board = Boards.Where(x => x.Name == ComponentBoardMap[component.Name]).First() as RawLamb.Board;
-                    var log = board.Log;
 
-                    xform.TryGetInverse(out inv);
-                    if (model.Mesh.ElementSets.ContainsKey(component.Name))
+                    model.Mesh.ElementOrientations.Clear();
+
+                    foreach (var component in Components)
                     {
-                        Logger.Info("Generating distributions for component '{0}'...", component.Name);
-
-                        var elset = model.Mesh.ElementSets[component.Name];
-
-                        var samplePoints = new Point3d[elset.Labels.Length];
-                        var elementOrientations = new Rhino.Geometry.Plane[elset.Labels.Length];
-                        for (int i = 0; i < elset.Labels.Length; ++i)
+                        if (!Component2LogTransforms.ContainsKey(component.Name))
                         {
-                            var elementId = elset.Labels[i];
-                            var cg = model.Mesh.Elements[elementId].GetCG(model.Mesh.Nodes);
-                            var samplePoint = new Point3d(cg[0], cg[1], cg[2]) * 1 / Scale;
-                            samplePoint.Transform(xform);
-                            samplePoints[i] = samplePoint;
+                            Logger.Error($"WARNING: component '{component.Name}' does not have a transform.");
+                            continue;
                         }
+                        Rhino.Geometry.Transform xform = Component2LogTransforms[component.Name];
+                        Rhino.Geometry.Transform inv;
+                        var board = Boards.Where(x => x.Name == ComponentBoardMap[component.Name]).First() as RawLamb.Board;
+                        var log = board.Log;
 
-                        log.GetMaterialOrientations(LogModels[log.Name], new FlowlineKnotFibreOrientationModel(), samplePoints, out elementOrientations);
-
-                        var debugIds = new List<Guid>();
-                        var xattributes = new Rhino.DocObjects.ObjectAttributes { ObjectColor = System.Drawing.Color.Red, ColorSource = ObjectColorSource.ColorFromObject };
-                        var yattributes = new Rhino.DocObjects.ObjectAttributes { ObjectColor = System.Drawing.Color.SpringGreen, ColorSource = ObjectColorSource.ColorFromObject };
-
-                        for (int i = 0; i < elset.Labels.Length; ++i)
+                        xform.TryGetInverse(out inv);
+                        if (model.Mesh.ElementSets.ContainsKey(component.Name))
                         {
-                            var elementId = elset.Labels[i];
-                            var elementOrientation = elementOrientations[i];
+                            Logger.Info("Generating distributions for component '{0}'...", component.Name);
 
-                            //debugIds.Add(rhinoDoc.Objects.AddLine(new Line(elementOrientation.Origin, elementOrientation.XAxis, 20), xattributes));
-                            //debugIds.Add(rhinoDoc.Objects.AddLine(new Line(elementOrientation.Origin, elementOrientation.YAxis, 20), yattributes));
+                            var elset = model.Mesh.ElementSets[component.Name];
 
-                            elementOrientation.Transform(inv);
-
-                            if (!elementOrientation.IsValid)
-                                continue;
-
-                            try
+                            var samplePoints = new Point3d[elset.Labels.Length];
+                            var elementOrientations = new Rhino.Geometry.Plane[elset.Labels.Length];
+                            for (int i = 0; i < elset.Labels.Length; ++i)
                             {
-                                model.Mesh.ElementOrientations.Add(elementId,
-                                    new FeMaterialOrientation(elementId,
-                                    elementOrientation.XAxis.X, elementOrientation.XAxis.Y, elementOrientation.XAxis.Z,
-                                    elementOrientation.YAxis.X, elementOrientation.YAxis.Y, elementOrientation.YAxis.Z));
+                                var elementId = elset.Labels[i];
+                                var cg = model.Mesh.Elements[elementId].GetCG(model.Mesh.Nodes);
+                                var samplePoint = new Point3d(cg[0], cg[1], cg[2]) * 1 / Scale;
+                                samplePoint.Transform(xform);
+                                samplePoints[i] = samplePoint;
                             }
-                            catch (Exception e)
+
+                            log.GetMaterialOrientations(LogModels[log.Name], new FlowlineKnotFibreOrientationModel(), samplePoints, out elementOrientations);
+
+                            var debugIds = new List<Guid>();
+                            var xattributes = new Rhino.DocObjects.ObjectAttributes { ObjectColor = System.Drawing.Color.Red, ColorSource = ObjectColorSource.ColorFromObject };
+                            var yattributes = new Rhino.DocObjects.ObjectAttributes { ObjectColor = System.Drawing.Color.SpringGreen, ColorSource = ObjectColorSource.ColorFromObject };
+
+                            for (int i = 0; i < elset.Labels.Length; ++i)
                             {
-                                Logger.Error("Orientation for element {0} already exists.", elementId);
-                                Logger.Error(e);
+                                var elementId = elset.Labels[i];
+                                var elementOrientation = elementOrientations[i];
+
+                                //debugIds.Add(rhinoDoc.Objects.AddLine(new Line(elementOrientation.Origin, elementOrientation.XAxis, 20), xattributes));
+                                //debugIds.Add(rhinoDoc.Objects.AddLine(new Line(elementOrientation.Origin, elementOrientation.YAxis, 20), yattributes));
+
+                                elementOrientation.Transform(inv);
+
+                                if (!elementOrientation.IsValid)
+                                    continue;
+
+                                try
+                                {
+                                    model.Mesh.ElementOrientations.Add(elementId,
+                                        new FeMaterialOrientation(elementId,
+                                        elementOrientation.XAxis.X, elementOrientation.XAxis.Y, elementOrientation.XAxis.Z,
+                                        elementOrientation.YAxis.X, elementOrientation.YAxis.Y, elementOrientation.YAxis.Z));
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.Error("Orientation for element {0} already exists.", elementId);
+                                    Logger.Error(e);
+                                }
                             }
+
+                            rhinoDoc.Groups.Add(component.Name, debugIds);
                         }
-
-                        rhinoDoc.Groups.Add(component.Name, debugIds);
                     }
+
+                    var distribution = model.Mesh.Distributions["dist"];
+                    distribution.Labels = model.Mesh.ElementOrientations.Select(x => x.Key).ToArray();
+
+                    model.Name = string.Format("EMA{0}", DateTime.UtcNow.ToString("yyMMddHHmmss"));
                 }
-
-                var distribution = model.Mesh.Distributions["dist"];
-                distribution.Labels = model.Mesh.ElementOrientations.Select(x => x.Key).ToArray();
-
-                model.Name = string.Format("EMA{0}", DateTime.UtcNow.ToString("yyMMddHHmmss"));
 
                 // Write input file
                 var outputDirectory = Settings.CalculixOutputPath;
                 outputDirectory = System.IO.Path.GetFullPath(outputDirectory);
                 var inp_path = System.IO.Path.Combine(outputDirectory, model.Name + ".inp");
-                Logger.Info("Writing INP file: {0}", inp_path);
-                FileInOut.Output.CalculixFileWriter.Write(inp_path, model);
 
+                if (ValidMesh)
+                {
+                    Logger.Info("Writing INP file: {0}", inp_path);
+                    FileInOut.Output.CalculixFileWriter.Write(inp_path, model);
+                }
+                else
+                {
+                    Logger.Error("");
+                    Logger.Error("No model constructed. No INP file to write.");
+                    Logger.Error("");
+                }
+            
                 Logger.Info("Saving debug Rhino file...");
                 var rhino_path = System.IO.Path.Combine(Settings.CalculixOutputPath, model.Name + ".3dm");
+
                 var docViews = rhinoDoc.Views.GetStandardRhinoViews();
                 foreach (var docView in docViews)
                 {
@@ -502,7 +747,8 @@ namespace RawLamAllocator
                     docView.MainViewport.DisplayMode = Rhino.Display.DisplayModeDescription.GetDisplayMode(Rhino.Display.DisplayModeDescription.ShadedId);
                 }
                 rhinoDoc.Write3dmFile(rhino_path, new Rhino.FileIO.FileWriteOptions());
-                
+                Logger.Info("Saved to {0}", rhino_path);
+
                 rhinoDoc.Objects.Clear();
                 rhinoDoc.Groups.Clear();
                 rhinoDoc.Layers.Clear();
@@ -511,38 +757,104 @@ namespace RawLamAllocator
 
 
                 #region Launch CalculiX
+                if (ValidMesh)
+                {
+                    Logger.Info("");
+                    Logger.Info("#############################################");
+                    Logger.Info("Run CalculiX...");
+                    Logger.Info("#############################################");
+                    Logger.Info("");
 
-                Logger.Info("");
-                Logger.Info("#############################################");
-                Logger.Info("Run CalculiX...");
-                Logger.Info("#############################################");
-                Logger.Info("");
+                    var ccx_path = Settings.CalculixExePath;
 
-                var ccx_path = Settings.CalculixExePath;
+                    if (!System.IO.Directory.Exists(outputDirectory))
+                        System.IO.Directory.CreateDirectory(outputDirectory);
 
-                if (!System.IO.Directory.Exists(outputDirectory))
-                    System.IO.Directory.CreateDirectory(outputDirectory);
+                    Logger.Info("CCX output directory : {0}", outputDirectory);
 
-                Logger.Info("CCX output directory : {0}", outputDirectory);
+                    var ccx_args = string.Format(" -i \"{0}\"", System.IO.Path.Combine(outputDirectory, model.Name));
 
-                var ccx_args = string.Format(" -i \"{0}\"", System.IO.Path.Combine(outputDirectory, model.Name));
-
-                LaunchCCX(ccx_path, ccx_args, outputDirectory);
+                    LaunchCCX(ccx_path, ccx_args, outputDirectory);
+                }
 
                 #endregion
 
                 Logger.Info("");
-                Logger.Info("#############################################");
-                Logger.Info("Evaluating CalculiX simulation results...");
-                Logger.Info("#############################################");
-                Logger.Info("");
-                // Open .frd file
-                // Find maximum displacement
-                // Save in Speckle results database along with element placements on boards
-
+                    Logger.Info("#############################################");
+                    Logger.Info("Evaluating CalculiX simulation results...");
+                    Logger.Info("#############################################");
+                    Logger.Info("");
+                    // Open .frd file
+                    // Find maximum displacement
+                    // Save in Speckle results database along with element placements on boards
                 var frd_path = System.IO.Path.Combine(outputDirectory, model.Name + ".frd");
-                var results = new Results(this);
-                results.Run(frd_path, inp_path, rhino_path, ref currentMin, ref currentMax, model);
+                //var results = new Results(this);
+                //results.Run(frd_path, inp_path, rhino_path, ref currentMin, ref currentMax, model);
+
+                // Load results and get new min/max values
+                FeResults results = null;
+
+                try
+                {
+                    if (System.IO.File.Exists(frd_path))
+                    {
+                        results = FrdFileReader.Read(frd_path);
+
+                        var field_name = "U";
+                        var component_name = "ALL";
+                        if (!results.GetAllFieldNames().Contains(field_name))
+                            field_name = results.GetAllFieldNames().FirstOrDefault();
+                        if (field_name == null)
+                        {
+                            Logger.Error("Couldn't get any field names. Results are probably corrupt or job failed.");
+                        }
+                        else
+                        {
+                            if (!results.GetAllFiledNameComponentNames()[field_name].Contains(component_name))
+                                component_name = results.GetAllFiledNameComponentNames()[field_name].FirstOrDefault();
+
+                            var fieldData = results.GetFieldData(field_name, component_name, results.GetAllStepIds()[0], 1);
+
+                            var values = results.GetValues(fieldData, results.Mesh.Nodes.Keys.ToArray());
+
+                            currentMin = values.Min();
+                            currentMax = values.Max();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+
+                // Compose results object
+                var allocationResults = new AllocatorResults
+                {
+                    ModelName = model.Name,
+                    FrdPath = frd_path,
+                    InpPath = inp_path,
+                    RhinoPath = rhino_path,
+                    MinDisplacement = currentMin,
+                    MaxDisplacement = currentMax
+                };
+
+                for (int i = 0; i < Components.Count; ++i)
+                {
+                    allocationResults.ComponentNames.Add(Components[i].Name);
+                    allocationResults.ComponentTransforms.Add(new Objects.Other.Transform(Component2LogTransforms[Components[i].Name].ToFloatArray(true)));
+                    allocationResults.ComponentBoards.Add(ComponentBoardMap[Components[i].Name]);
+                    allocationResults.ComponentLogs.Add(BoardLogMap[ComponentBoardMap[Components[i].Name]]);
+                }
+
+                var resultsTransport = new Speckle.Core.Transports.SQLiteTransport(Settings.ProjectDirectory, Settings.ModelDirectory, "results");
+
+                // Send results object to database
+                var resString = Task.Run(async () => await Speckle.Core.Api.Operations.Send(allocationResults, new List<Speckle.Core.Transports.ITransport> { resultsTransport }, false)).Result;
+
+                // Write to simulation commit file
+                var resultsLogPath = System.IO.Path.Combine(Settings.ProjectDirectory, Settings.ModelDirectory, "results.log");
+                System.IO.File.AppendAllLines(resultsLogPath, new string[] { resString });
+                Logger.Info("Results ID: {0}", resString);
 
                 // Increment iteration counter and go again...
                 totalIterations++;

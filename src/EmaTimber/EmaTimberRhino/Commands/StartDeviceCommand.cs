@@ -63,11 +63,15 @@ namespace EmaTimber.Commands
         }
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
-        { 
-            if (ETContext.CncConnection == null)
-            {
-                ETContext.FindDevice(PhysicalAddress.Parse("8C8CAA0F614E"));
-            }
+        {
+            if (ETContext.CncAddress == null) return Result.Failure;
+
+            //ETContext.CncConnection = ETContext.GetPcapDevice(ETContext.CncFriendlyName);
+            ETContext.CncConnection = ETContext.GetPcapDevice(ETContext.CncAddress);
+            //if (ETContext.CncConnection == null)
+            //{
+            //    ETContext.FindDevice(PhysicalAddress.Parse("8C8CAA0F614E"));
+            //}
 
             //RhinoApp.WriteLine("Configuring device...");
             var config = new DeviceConfiguration { 
@@ -82,6 +86,12 @@ namespace EmaTimber.Commands
 
             RhinoApp.WriteLine("Opening CNC connection...");
             ETContext.CncConnection.Open(config);
+            if (!ETContext.CncConnection.Opened)
+            {
+                RhinoApp.WriteLine("Failed.");
+                return Result.Failure;
+            }
+
             ETContext.CncConnection.NonBlockingMode = true;
 
             ETContext.CncConnection.OnPacketArrival += Device_OnPacketArrival;
@@ -91,7 +101,7 @@ namespace EmaTimber.Commands
             // Setup laser
             RhinoApp.WriteLine("Opening laser connection...");
             if (ETContext.DistanceSensor == null)
-                ETContext.DistanceSensor = new OD2Interface("COM5"); // Change to allow picking of port
+                ETContext.DistanceSensor = new OD2Interface(ETContext.LaserPort); // Change to allow picking of port
 
             ETContext.DistanceSensor.ContinuousMeasure = true;
             ETContext.DistanceSensor.SendCommand("LASER_ON");

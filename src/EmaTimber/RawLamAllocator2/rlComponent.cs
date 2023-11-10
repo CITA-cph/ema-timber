@@ -12,12 +12,21 @@ using ClipperLib;
 
 namespace RawLamAllocator
 {
+    public class Drilling
+    {
+        public Line Axis = Line.Unset;
+        public double Diameter = double.NaN;
+
+        public Drilling() { }
+    }
+
     internal class rlComponent
     {
         public Plane Plane;
         public Brep Geometry;
         public string Name;
         public Polyline[] Outline;
+        public List<object> Objects;
 
         public rlComponent()
         {
@@ -25,6 +34,7 @@ namespace RawLamAllocator
             Geometry = null;
             Name = "null";
             Outline = null;
+            Objects = new List<object>();
         }
 
         public rlComponent(Plane plane, Brep geometry, string name)
@@ -33,6 +43,8 @@ namespace RawLamAllocator
             Geometry = geometry;
             Name = name;
             Outline = null;
+            Objects = new List<object>();
+
         }
 
         public static Polyline[] MeshOutline(Mesh mesh)

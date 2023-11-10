@@ -40,10 +40,12 @@
   <ItemGroup>
     <Reference Include="DeepSightCommon">
       <HintPath>..\..\..\..\deep-sight\bin\DeepSightCommon.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DeepSightNet, Version=0.4.8606.29473, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\deep-sight\bin\DeepSightNet.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>..\packages\RhinoCommon.7.31.23166.15001\lib\net48\Eto.dll</HintPath>

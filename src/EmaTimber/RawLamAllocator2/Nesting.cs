@@ -24,8 +24,8 @@ namespace RawLamAllocator
             sheetIds = new int[elements.Count];
 
             var nestContext = new NestingContext();
-            ONest.Config.spacing = 10;
-            ONest.Config.sheetSpacing = 0;
+            ONest.Config.spacing = 20;
+            ONest.Config.sheetSpacing = 5;
             ONest.Config.rotations = 2;
             ONest.Config.placementType = PlacementTypeEnum.squeeze;
             ONest.Config.seed = seed;
