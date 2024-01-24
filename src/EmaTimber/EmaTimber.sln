@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawLamAllocator", "RawLamAl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OccNet", "OccNet\OccNet.vcxproj", "{0AE1B92B-0D13-4C56-9F8D-FA973FD44D0E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrdReader", "FrdReader\FrdReader.vcxproj", "{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,14 +69,6 @@ Global
 		{0AE1B92B-0D13-4C56-9F8D-FA973FD44D0E}.Release|x64.Build.0 = Release|x64
 		{0AE1B92B-0D13-4C56-9F8D-FA973FD44D0E}.Release|x86.ActiveCfg = Release|Win32
 		{0AE1B92B-0D13-4C56-9F8D-FA973FD44D0E}.Release|x86.Build.0 = Release|Win32
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Debug|x64.ActiveCfg = Debug|x64
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Debug|x64.Build.0 = Debug|x64
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Debug|x86.ActiveCfg = Debug|Win32
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Debug|x86.Build.0 = Debug|Win32
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Release|x64.ActiveCfg = Release|x64
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Release|x64.Build.0 = Release|x64
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Release|x86.ActiveCfg = Release|Win32
-		{E9DF25F8-DB4E-4E72-8C86-CAF3A563BB74}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

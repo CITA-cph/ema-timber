@@ -406,7 +406,7 @@ namespace RawLamb
                 var knot_region = new KnotRegion(knot, 6, 35);
                 if (knot_region == null) continue;
 
-                knot_region = knot.FibreDeviationRegion;
+                knot.FibreDeviationRegion = knot_region;
                 //m_knot_regions.Add(knot_region);
                 knot_region_geometry.Add(knot_region.ToBrep());
             }

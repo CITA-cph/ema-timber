@@ -73,9 +73,9 @@ namespace RawLamAllocator
                 var tools = new Pair[fragMap.Count - 1];
                 Array.Copy(fragMap.ToArray(), 1, tools, 0, tools.Length);
 
-                Gmsh.OCC.Fragment(new Pair[] { fragMap[0] }, tools, out dimTags, out dimTagMap, -1, true, true);
+                Gmsh.Model.OCC.Fragment(new Pair[] { fragMap[0] }, tools, out dimTags, out dimTagMap, -1, true, true);
 
-                Gmsh.OCC.Synchronize();
+                Gmsh.Model.OCC.Synchronize();
 
                 Logger.Info("length dimTagMap {0}", dimTagMap.Length);
                 Logger.Info("length fragMap   {0}", fragMap.Count);
@@ -90,27 +90,27 @@ namespace RawLamAllocator
                     Logger.Info("Adding physical group '{0}'...", volumeMap[key]);
                     if (dimTagMap[i].Length < 1) Logger.Info("    ... no child entities!");
 
-                    Gmsh.AddPhysicalGroup(3, dimTagMap[i].Select(x => x.Item2).ToArray(), volumeMap[key]);
+                    Gmsh.Model.AddPhysicalGroup(3, dimTagMap[i].Select(x => x.Item2).ToArray(), volumeMap[key]);
                 }
 
-                Gmsh.SetNumber("Mesh.MeshSizeMin", sizeMin);
-                Gmsh.SetNumber("Mesh.MeshSizeMax", sizeMax);
+                Gmsh.Option.SetNumber("Mesh.MeshSizeMin", sizeMin);
+                Gmsh.Option.SetNumber("Mesh.MeshSizeMax", sizeMax);
 
-                Gmsh.SetNumber("Mesh.MeshSizeFromCurvature", 12);
-                Gmsh.SetNumber("Mesh.Optimize", 1);
+                Gmsh.Option.SetNumber("Mesh.MeshSizeFromCurvature", 12);
+                Gmsh.Option.SetNumber("Mesh.Optimize", 1);
 
 
-                Gmsh.SetNumber("Mesh.SaveGroupsOfElements", -1001);
-                Gmsh.SetNumber("Mesh.SaveGroupsOfNodes", 2);
+                Gmsh.Option.SetNumber("Mesh.SaveGroupsOfElements", -1001);
+                Gmsh.Option.SetNumber("Mesh.SaveGroupsOfNodes", 2);
                 //Gmsh.SetNumber("Mesh.ElementOrder", 2);
-                Gmsh.SetNumber("Mesh.SecondOrderLinear", 1);
-                Gmsh.SetNumber("Mesh.HighOrderOptimize", 1);
+                Gmsh.Option.SetNumber("Mesh.SecondOrderLinear", 1);
+                Gmsh.Option.SetNumber("Mesh.HighOrderOptimize", 1);
                 //Gmsh.SetNumber("Mesh.AngleToleranceFacetOverlap", 0.1);
-                Gmsh.SetNumber("Mesh.MeshSizeExtendFromBoundary", 1);
+                Gmsh.Option.SetNumber("Mesh.MeshSizeExtendFromBoundary", 1);
 
                 //Gmsh.SetNumber("Mesh.Algorithm3D", 4);
 
-                Gmsh.Generate(3);
+                Gmsh.Model.Generate(3);
 
                 //Gmsh.Mesh.RemoveDuplicateNodes();
                 //Gmsh.Mesh.RemoveDuplicateElements();
@@ -125,7 +125,7 @@ namespace RawLamAllocator
                 // Get all nodes
                 IntPtr[] nodeTagsIntPtr;
                 double[] coords;
-                Gmsh.Mesh.GetNodes(out nodeTagsIntPtr, out coords, 3, -1, true, false);
+                Gmsh.Model.Mesh.GetNodes(out nodeTagsIntPtr, out coords, 3, -1, true, false);
 
                 var nodeDict = new Dictionary<int, Tuple<double, double, double>>();
                 for (int i = 0; i < nodeTagsIntPtr.Length; ++i)
@@ -145,7 +145,7 @@ namespace RawLamAllocator
                 int[] elementTypesTemp;
                 IntPtr[][] elementTagsIntPtr;
                 IntPtr[][] elementNodeTags;
-                Gmsh.Mesh.GetElements(out elementTypesTemp, out elementTagsIntPtr, out elementNodeTags, 3, -1);
+                Gmsh.Model.Mesh.GetElements(out elementTypesTemp, out elementTagsIntPtr, out elementNodeTags, 3, -1);
 
                 for (int i = 0; i < elementTypesTemp.Length; ++i)
                 {
@@ -156,7 +156,7 @@ namespace RawLamAllocator
                     string elementName;
                     double[] localNodeCoords;
 
-                    elementName = GmshCommon.Gmsh.Mesh.GetElementProperties(elementType, out dim, out order, out numNodes, out localNodeCoords, out numPrimaryNodes);
+                    elementName = GmshCommon.Gmsh.Model.Mesh.GetElementProperties(elementType, out dim, out order, out numNodes, out localNodeCoords, out numPrimaryNodes);
                     Logger.Info("Element type: {0} ({1})", elementType, elementName);
                     Logger.Info("Num elements: {0}", elementTagsIntPtr.Length);
 
@@ -187,18 +187,18 @@ namespace RawLamAllocator
                 elementGroups = new Dictionary<string, List<Pair>>();
 
                 var pgMap = new Dictionary<string, List<Pair>>();
-                var physicalGroups = Gmsh.GetPhysicalGroups(3);
+                var physicalGroups = Gmsh.Model.GetPhysicalGroups(3);
                 foreach (var pg in physicalGroups)
                 {
-                    var pgName = Gmsh.GetPhysicalName(pg.Item1, pg.Item2);
+                    var pgName = Gmsh.Model.GetPhysicalName(pg.Item1, pg.Item2);
                     if (!elementGroups.ContainsKey(pgName))
                         elementGroups[pgName] = new List<Pair>();
 
-                    var entities = Gmsh.GetEntitiesForPhysicalGroup(pg.Item1, pg.Item2);
+                    var entities = Gmsh.Model.GetEntitiesForPhysicalGroup(pg.Item1, pg.Item2);
 
                     foreach (var entity in entities)
                     {
-                        Gmsh.Mesh.GetElements(out elementTypesTemp, out elementTagsIntPtr, out elementNodeTags, pg.Item1, entity);
+                        Gmsh.Model.Mesh.GetElements(out elementTypesTemp, out elementTagsIntPtr, out elementNodeTags, pg.Item1, entity);
                         foreach(var ele in elementTagsIntPtr)
                             elementGroups[pgName].AddRange(ele.Select(x => new Pair(pg.Item1, (int)x)));
                     }
@@ -253,11 +253,11 @@ namespace RawLamAllocator
 
             doc.Dispose();
 
-            Gmsh.OCC.ImportShapes(filePath, out dimTags, false, "stp");
+            Gmsh.Model.OCC.ImportShapes(filePath, out dimTags, false, "stp");
 
-            Gmsh.OCC.Synchronize();
+            Gmsh.Model.OCC.Synchronize();
 
-            dimTags = Gmsh.OCC.GetEntities(3);
+            dimTags = Gmsh.Model.OCC.GetEntities(3);
 
             if (dimTags.Length != breps.Count)
             {
@@ -309,8 +309,8 @@ namespace RawLamAllocator
                     doc.Dispose();
                 }
 
-                Gmsh.OCC.ImportShapes(temp_path, out dimTags, false, "stp");
-                Gmsh.OCC.Synchronize();
+                Gmsh.Model.OCC.ImportShapes(temp_path, out dimTags, false, "stp");
+                Gmsh.Model.OCC.Synchronize();
 
                 foreach (var tag in dimTags)
                 {

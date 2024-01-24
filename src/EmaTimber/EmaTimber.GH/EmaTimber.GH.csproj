@@ -76,6 +76,7 @@
   <ItemGroup>
     <Compile Include="Api.cs" />
     <Compile Include="CreateConvert\DeLog.cs" />
+    <Compile Include="IO\ExportSTP.cs" />
     <Compile Include="LogGoo.cs" />
     <Compile Include="IO\MetaLogLoad.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
