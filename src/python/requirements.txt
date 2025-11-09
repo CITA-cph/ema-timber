@@ -1,5 +1,5 @@
-gmsh==4.11.1
-opencv-python==4.7.0.68
-pydantic==1.9.1
-specklepy==2.7.0
-networkx==2.8.8
+xgmsh==4.11.1
+xopencv-python==4.7.0.68
+xpydantic==1.9.1
+xspecklepy==2.7.0
+xnetworkx==2.8.8

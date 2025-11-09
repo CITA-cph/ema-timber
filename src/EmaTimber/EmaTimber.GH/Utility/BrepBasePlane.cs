@@ -1,4 +1,5 @@
-﻿/*
+﻿#if OBSOLETE
+/*
  * RawLamb
  * Copyright 2022 Tom Svilans
  * 
@@ -16,14 +17,8 @@
  * 
  */
 
-using System;
-using System.Collections.Generic;
-
 using Rhino.Geometry;
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Types;
-
-using Grid = DeepSight.FloatGrid;
 
 namespace EmaTimber.GH.Components
 {
@@ -76,3 +71,4 @@ namespace EmaTimber.GH.Components
         }
     }
 }
+#endif

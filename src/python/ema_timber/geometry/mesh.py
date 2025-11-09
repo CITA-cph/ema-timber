@@ -8,12 +8,12 @@ try:
     from .classes import Board, Log
     from .util import *
 except:
-    print("Defaulting to direct import...")
+    print("-- Defaulting to direct import...")
     from classes import Board, Log
     from util import *
 
 class BoardGenerator():
-    def __init__(self, board, log, element_order = 2):
+    def __init__(self, board: Board, log: Log, element_order = 2):
         self.board = board
         self.log = log
         self.element_order = element_order
@@ -28,16 +28,16 @@ class BoardGenerator():
         pl = self.board.basePlane
         zaxis = cross(pl.xaxis, pl.yaxis)
         matrix = [*pl.xaxis, pl.origin[0], *pl.yaxis, pl.origin[1], *zaxis, pl.origin[2]]
-        logging.debug(f"matrix: {matrix}")
+        logging.debug(f"-- matrix: {matrix}")
 
         dims = self.board.dimensions
-        logging.debug(f"pos {pl.origin}")
-        logging.debug(f"dims {dims}")
+        logging.debug(f"-- pos {pl.origin}")
+        logging.debug(f"-- dims {dims}")
 
         board_id = (3, gmsh.model.occ.addBox(0, 0, 0, dims[0], dims[1], dims[2]))
         gmsh.model.occ.affine_transform([board_id], matrix)
 
-        logging.debug(f"board_id {board_id}")
+        logging.debug(f"-- board_id {board_id}")
 
         knot_ids = []
 
@@ -60,14 +60,14 @@ class BoardGenerator():
         trimmed_board = gmsh.model.occ.cut([board_id], knot_ids, -1, True, True)
         gmsh.model.occ.synchronize()
 
-        logging.debug(f"trimmed knots {trimmed_knots[1]}")
-        logging.debug(f"num original knots: {len(self.log.knots)}")
+        logging.debug(f"-- trimmed knots {trimmed_knots[1]}")
+        logging.debug(f"-- num original knots: {len(self.log.knots)}")
 
         # Remap trimmed knots to original knots
         tk_map = trimmed_knots[1][1:]
         assert len(tk_map) == len(knot_ids)
         N = len(tk_map)
-        logging.debug(f"tk_map {tk_map}")
+        logging.debug(f"-- tk_map {tk_map}")
 
         trimmed_knot_names = []
 
@@ -76,9 +76,9 @@ class BoardGenerator():
         for i in range(N):
             if len(tk_map[i]) < 1:
                 continue
-            logging.debug(f"    tk_map {i} : {tk_map[i]}")
-            logging.debug(f"        dim {tk_map[i][0][0]}")
-            logging.debug(f"        id  {[x[1] for x in tk_map[i]]}")
+            logging.debug(f"--     tk_map {i} : {tk_map[i]}")
+            logging.debug(f"--         dim {tk_map[i][0][0]}")
+            logging.debug(f"--         id  {[x[1] for x in tk_map[i]]}")
 
             for x in tk_map[i]:
                 key = self.log.knots[i].id
@@ -88,9 +88,9 @@ class BoardGenerator():
 
         gmsh.model.occ.synchronize()
 
-        logging.debug(f"trimmed board {trimmed_board}")
-        logging.debug(f"        dim  {trimmed_board[0][0][0]}")
-        logging.debug(f"        tags {trimmed_board[0][0][1]}")
+        logging.debug(f"-- trimmed board {trimmed_board}")
+        logging.debug(f"--         dim  {trimmed_board[0][0][0]}")
+        logging.debug(f"--         tags {trimmed_board[0][0][1]}")
 
         fragmented_board = gmsh.model.occ.fragment(trimmed_knots[0], trimmed_board[0])[0]
 

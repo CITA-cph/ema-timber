@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 
 using Rhino.Geometry;
-using StudioAvw.Geometry;
+//using StudioAvw.Geometry;
 
-using DeepSight;
-using DeepSight.RhinoCommon;
+//using DeepSight;
+//using DeepSight.RhinoCommon;
 
-using Grid = DeepSight.FloatGrid;
+//using Grid = DeepSight.FloatGrid;
 using System.Linq;
 
 namespace RawLamb
@@ -35,7 +35,7 @@ namespace RawLamb
         public List<Knot> Knots;
         public Polyline Pith;
         public BoundingBox BoundingBox;
-        public Dictionary<string, GridApi> Grids;
+        //public Dictionary<string, GridApi> Grids;
         public RTree Tree;
 
         //private List<KnotRegion> m_knot_regions;
@@ -58,113 +58,113 @@ namespace RawLamb
             Plane = Plane.WorldXY;
             Mesh = new Rhino.Geometry.Mesh();
             Pith = new Polyline();
-            Grids = new Dictionary<string, GridApi>();
+            //Grids = new Dictionary<string, GridApi>();
         }
 
-        public Log(string name, Grid ctlog) : this()
-        {
-            Name = name;
-            Grids[name] = ctlog;
-        }
+        //public Log(string name, Grid ctlog) : this()
+        //{
+        //    Name = name;
+        //    Grids[name] = ctlog;
+        //}
 
-        public void ReadInfoLog(string path)
-        {
-            InfoLog ilog = new InfoLog();
-            ilog.Read(path);
+        //public void ReadInfoLog(string path)
+        //{
+        //    InfoLog ilog = new InfoLog();
+        //    ilog.Read(path);
 
-            Pith = new Polyline();
+        //    Pith = new Polyline();
 
-            for (int i = 0; i < ilog.Pith.Length; i += 2)
-            {
-                Pith.Add(new Point3d(ilog.Pith[i], ilog.Pith[i + 1], i * 5));
-            }
+        //    for (int i = 0; i < ilog.Pith.Length; i += 2)
+        //    {
+        //        Pith.Add(new Point3d(ilog.Pith[i], ilog.Pith[i + 1], i * 5));
+        //    }
 
-            Knots = new List<Knot>();
+        //    Knots = new List<Knot>();
 
 
-            for (int i = 0; i < ilog.Knots.Length; i += 11)
-            {
-                var buf = ilog.Knots;
+        //    for (int i = 0; i < ilog.Knots.Length; i += 11)
+        //    {
+        //        var buf = ilog.Knots;
 
-                var line = new Line(
-                    new Point3d(
-                        buf[i + 1],
-                        buf[i + 2],
-                        buf[i + 3]),
-                    new Point3d(
-                        buf[i + 4],
-                        buf[i + 5],
-                        buf[i + 6]));
+        //        var line = new Line(
+        //            new Point3d(
+        //                buf[i + 1],
+        //                buf[i + 2],
+        //                buf[i + 3]),
+        //            new Point3d(
+        //                buf[i + 4],
+        //                buf[i + 5],
+        //                buf[i + 6]));
 
-                var knot = new Knot()
-                {
-                    Index = (int)buf[i],
-                    Axis = line,
-                    Length = line.Length,
-                    DeadKnotRadius = ilog.Knots[i + 7],
-                    Radius = ilog.Knots[i + 8],
-                    Volume = ilog.Knots[i + 10]
-                };
+        //        var knot = new Knot()
+        //        {
+        //            Index = (int)buf[i],
+        //            Axis = line,
+        //            Length = line.Length,
+        //            DeadKnotRadius = ilog.Knots[i + 7],
+        //            Radius = ilog.Knots[i + 8],
+        //            Volume = ilog.Knots[i + 10]
+        //        };
 
-                knot.SetFibreDeviationRegion();
-                knot.SetTransitionRegion();
+        //        knot.SetFibreDeviationRegion();
+        //        knot.SetTransitionRegion();
 
-                Knots.Add(knot);
-            }
-        }
+        //        Knots.Add(knot);
+        //    }
+        //}
 
-        [Obsolete("Not used any more")]
-        public static Log LoadCtLog(string path, Transform xform, bool create_mesh = false, double resample_resolution = 30.0, double mesh_isovalue = 0.7)
-        {
-            if (!System.IO.File.Exists(path))
-                throw new Exception($"File '{path}' does not exist.");
+        //[Obsolete("Not used any more")]
+        //public static Log LoadCtLog(string path, Transform xform, bool create_mesh = false, double resample_resolution = 30.0, double mesh_isovalue = 0.7)
+        //{
+        //    if (!System.IO.File.Exists(path))
+        //        throw new Exception($"File '{path}' does not exist.");
 
-            string name = System.IO.Path.GetFileNameWithoutExtension(path);
+        //    string name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-            Grid ctlog = null;
+        //    Grid ctlog = null;
 
-            try
-            {
-                ctlog = GridIO.Read(path)[0] as FloatGrid;
-                if (ctlog == null) throw new ArgumentException("Could not get a FloatGrid.");
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Loading CtLog failed: {e.Message}");
-            }
+        //    try
+        //    {
+        //        //ctlog = GridIO.Read(path)[0] as FloatGrid;
+        //        if (ctlog == null) throw new ArgumentException("Could not get a FloatGrid.");
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        throw new Exception($"Loading CtLog failed: {e.Message}");
+        //    }
 
-            ctlog.Transform(xform);
+        //    ctlog.Transform(xform);
 
-            var log = new Log(name, ctlog);
+        //    var log = new Log(name, ctlog);
 
-            if (create_mesh)
-            {
-                var rlog = Tools.Resample(ctlog, resample_resolution);
-                log.Mesh = rlog.ToRhinoMesh(mesh_isovalue, true);
-            }
+        //    if (create_mesh)
+        //    {
+        //        //var rlog = Tools.Resample(ctlog, resample_resolution);
+        //        //log.Mesh = rlog.ToRhinoMesh(mesh_isovalue, true);
+        //    }
 
-            return log;
-        }
+        //    return log;
+        //}
 
-        public void Transform(Transform xform)
-        {
-            if (Mesh != null)
-                Mesh.Transform(xform);
+        //public void Transform(Transform xform)
+        //{
+        //    if (Mesh != null)
+        //        Mesh.Transform(xform);
 
-            Plane.Transform(xform);
-            for (int i = 0; i < Boards.Count; ++i)
-            {
-                Boards[i].Transform(xform);
-            }
-            foreach (var key in Grids.Keys)
-            {
-                Grids[key].Transform(xform);
-            }
-            foreach (var knot in Knots)
-                knot.Transform(xform);
+        //    Plane.Transform(xform);
+        //    for (int i = 0; i < Boards.Count; ++i)
+        //    {
+        //        Boards[i].Transform(xform);
+        //    }
+        //    foreach (var key in Grids.Keys)
+        //    {
+        //        Grids[key].Transform(xform);
+        //    }
+        //    foreach (var knot in Knots)
+        //        knot.Transform(xform);
 
-            Pith.Transform(xform);
-        }
+        //    Pith.Transform(xform);
+        //}
 
         public Log Duplicate()
         {
@@ -176,7 +176,7 @@ namespace RawLamb
             for (int i = 0; i < Boards.Count; ++i)
             {
                 var brd = Boards[i].Duplicate();
-                brd.Log = log;
+                //brd.Log = log;
                 log.Boards.Add(brd);
             }
 
@@ -184,217 +184,217 @@ namespace RawLamb
             {
                 log.Knots.Add(Knots[i].Duplicate());
             }
-            foreach (var key in Grids.Keys)
-            {
-                log.Grids[key] = Grids[key].Duplicate();
-            }
+            //foreach (var key in Grids.Keys)
+            //{
+            //    log.Grids[key] = Grids[key].Duplicate();
+            //}
 
             return log;
         }
 
-        /// <summary>
-        /// IN PROGRESS.
-        /// </summary>
-        /// <param name="cutting_planes"></param>
-        /// <param name="names"></param>
-        /// <param name="kerf"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public List<Board> CutBoards(IList<Plane> cutting_planes, IList<string> names, double kerf = 3.0, double offset = 0.0)
-        {
-            var boards = new List<Board>();
+        ///// <summary>
+        ///// IN PROGRESS.
+        ///// </summary>
+        ///// <param name="cutting_planes"></param>
+        ///// <param name="names"></param>
+        ///// <param name="kerf"></param>
+        ///// <param name="offset"></param>
+        ///// <returns></returns>
+        //public List<Board> CutBoards(IList<Plane> cutting_planes, IList<string> names, double kerf = 3.0, double offset = 0.0)
+        //{
+        //    var boards = new List<Board>();
 
-            for (int i = 0; i < cutting_planes.Count - 1; ++i)
-            {
-                string name = string.Format("Board_{0:00}", i);
-                if (names != null && i < names.Count)
-                {
-                    name = names[i];
-                }
+        //    for (int i = 0; i < cutting_planes.Count - 1; ++i)
+        //    {
+        //        string name = string.Format("Board_{0:00}", i);
+        //        if (names != null && i < names.Count)
+        //        {
+        //            name = names[i];
+        //        }
 
-                var brd = CutBoard(cutting_planes[i], cutting_planes[i + 1], name, offset);
-                boards.Add(brd);
-            }
+        //        var brd = CutBoard(cutting_planes[i], cutting_planes[i + 1], name, offset);
+        //        boards.Add(brd);
+        //    }
 
-            Boards.AddRange(boards);
-            return boards;
-        }
+        //    Boards.AddRange(boards);
+        //    return boards;
+        //}
 
-        public Board CutBoard(Plane top, Plane bottom, string name = "Board", double offset = 0.0)
-        {
-            if (Mesh == null)
-                throw new Exception("Log has no mesh.");
+        //public Board CutBoard(Plane top, Plane bottom, string name = "Board", double offset = 0.0)
+        //{
+        //    if (Mesh == null)
+        //        throw new Exception("Log has no mesh.");
 
-            Vector3d v = top.Origin - bottom.Origin;
+        //    Vector3d v = top.Origin - bottom.Origin;
 
-            double thickness = Math.Abs(v * top.ZAxis);
-            var brd = new Board() { Name = name, Thickness = thickness, Plane = top, LogId = Id, Log = this };
+        //    double thickness = Math.Abs(v * top.ZAxis);
+        //    var brd = new Board() { Name = name, Thickness = thickness, Plane = top, LogId = Id, Log = this };
 
-            if (top.ZAxis * v < 0)
-                top = new Plane(top.Origin, -top.XAxis, top.YAxis);
-            if (bottom.ZAxis * v > 0)
-                bottom = new Plane(bottom.Origin, -bottom.XAxis, bottom.YAxis);
+        //    if (top.ZAxis * v < 0)
+        //        top = new Plane(top.Origin, -top.XAxis, top.YAxis);
+        //    if (bottom.ZAxis * v > 0)
+        //        bottom = new Plane(bottom.Origin, -bottom.XAxis, bottom.YAxis);
 
-            brd.TopPlane = top;
-            brd.BottomPlane = bottom;
+        //    brd.TopPlane = top;
+        //    brd.BottomPlane = bottom;
 
-            // Intersect planes with log mesh
-
-
-            int index = 0;
-            double max_area = 0;
-            List<Polyline> pout1, pout2;
-
-            var res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, top);
-            if (res != null && res.Length > 0)
-            {
+        //    // Intersect planes with log mesh
 
 
-                if (res.Length > 1)
-                {
-                    for (int j = 0; j < res.Length; ++j)
-                    {
-                        var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
-                        if (amp == null) continue;
+        //    int index = 0;
+        //    double max_area = 0;
+        //    List<Polyline> pout1, pout2;
 
-                        if (amp.Area > max_area)
-                        {
-                            index = j;
-                            max_area = amp.Area;
-                        }
-                    }
-                }
+        //    var res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, top);
+        //    if (res != null && res.Length > 0)
+        //    {
 
-                Polyline3D.Offset(new Polyline[] { res[index] },
-                  Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
-                  offset,
-                  brd.Plane,
-                  0.01,
-                  out pout1,
-                  out pout2);
 
-                if (pout1.Count > 0)
-                    brd.Top = pout1;
-                else if (pout2.Count > 0)
-                    brd.Top = pout2;
-                else
-                    brd.Top = new List<Polyline> { res[index] };
-            }
+        //        if (res.Length > 1)
+        //        {
+        //            for (int j = 0; j < res.Length; ++j)
+        //            {
+        //                var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
+        //                if (amp == null) continue;
 
-            // Cut bottom plane
-            res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, bottom);
-            if (res != null && res.Length > 0)
-            {
-                index = 0;
-                max_area = 0;
+        //                if (amp.Area > max_area)
+        //                {
+        //                    index = j;
+        //                    max_area = amp.Area;
+        //                }
+        //            }
+        //        }
 
-                if (res.Length > 1)
-                {
-                    for (int j = 0; j < res.Length; ++j)
-                    {
-                        var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
-                        if (amp == null) continue;
+        //        Polyline3D.Offset(new Polyline[] { res[index] },
+        //          Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
+        //          offset,
+        //          brd.Plane,
+        //          0.01,
+        //          out pout1,
+        //          out pout2);
 
-                        if (amp.Area > max_area)
-                        {
-                            index = j;
-                            max_area = amp.Area;
-                        }
-                    }
-                }
+        //        if (pout1.Count > 0)
+        //            brd.Top = pout1;
+        //        else if (pout2.Count > 0)
+        //            brd.Top = pout2;
+        //        else
+        //            brd.Top = new List<Polyline> { res[index] };
+        //    }
 
-                Polyline3D.Offset(new Polyline[] { res[index] },
-                  Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
-                  offset,
-                  brd.Plane,
-                  0.01,
-                  out pout1,
-                  out pout2);
+        //    // Cut bottom plane
+        //    res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, bottom);
+        //    if (res != null && res.Length > 0)
+        //    {
+        //        index = 0;
+        //        max_area = 0;
 
-                if (pout1.Count > 0)
-                    brd.Bottom = pout1;
-                else if (pout2.Count > 0)
-                    brd.Bottom = pout2;
-                else
-                    brd.Bottom = new List<Polyline> { res[index] };
-            }
+        //        if (res.Length > 1)
+        //        {
+        //            for (int j = 0; j < res.Length; ++j)
+        //            {
+        //                var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
+        //                if (amp == null) continue;
 
-            Boards.Add(brd);
+        //                if (amp.Area > max_area)
+        //                {
+        //                    index = j;
+        //                    max_area = amp.Area;
+        //                }
+        //            }
+        //        }
 
-            return brd;
-        }
+        //        Polyline3D.Offset(new Polyline[] { res[index] },
+        //          Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
+        //          offset,
+        //          brd.Plane,
+        //          0.01,
+        //          out pout1,
+        //          out pout2);
 
-        public Board CutBoard(Plane p, string name = "Board", double thickness = 45.0, double offset = 0.0)
-        {
-            if (Mesh == null)
-                throw new Exception("Log has no mesh.");
+        //        if (pout1.Count > 0)
+        //            brd.Bottom = pout1;
+        //        else if (pout2.Count > 0)
+        //            brd.Bottom = pout2;
+        //        else
+        //            brd.Bottom = new List<Polyline> { res[index] };
+        //    }
 
-            var brd = new Board() { Name = name, Thickness = thickness, Plane = p, LogId = Id, Log = this };
+        //    Boards.Add(brd);
 
-            var res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, p);
-            if (res == null || res.Length < 1) return null;
+        //    return brd;
+        //}
 
-            int index = 0;
-            double max_area = 0;
+        //public Board CutBoard(Plane p, string name = "Board", double thickness = 45.0, double offset = 0.0)
+        //{
+        //    if (Mesh == null)
+        //        throw new Exception("Log has no mesh.");
 
-            if (res.Length > 1)
-            {
-                for (int j = 0; j < res.Length; ++j)
-                {
-                    var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
-                    if (amp == null) continue;
+        //    var brd = new Board() { Name = name, Thickness = thickness, Plane = p, LogId = Id, Log = this };
 
-                    if (amp.Area > max_area)
-                    {
-                        index = j;
-                        max_area = amp.Area;
-                    }
-                }
-            }
+        //    var res = Rhino.Geometry.Intersect.Intersection.MeshPlane(Mesh, p);
+        //    if (res == null || res.Length < 1) return null;
 
-            List<Polyline> pout1, pout2;
-            Polyline3D.Offset(new Polyline[] { res[index] },
-              Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
-              offset,
-              brd.Plane,
-              0.01,
-              out pout1,
-              out pout2);
+        //    int index = 0;
+        //    double max_area = 0;
 
-            if (pout1.Count > 0)
-                brd.Centre = pout1[0];
-            else if (pout2.Count > 0)
-                brd.Centre = pout2[0];
-            else
-                brd.Centre = res[index];
+        //    if (res.Length > 1)
+        //    {
+        //        for (int j = 0; j < res.Length; ++j)
+        //        {
+        //            var amp = AreaMassProperties.Compute(res[j].ToNurbsCurve());
+        //            if (amp == null) continue;
 
-            brd.Centre.ReduceSegments(3);
-            brd.LogId = Id;
+        //            if (amp.Area > max_area)
+        //            {
+        //                index = j;
+        //                max_area = amp.Area;
+        //            }
+        //        }
+        //    }
 
-            Boards.Add(brd);
+        //    List<Polyline> pout1, pout2;
+        //    Polyline3D.Offset(new Polyline[] { res[index] },
+        //      Polyline3D.OpenFilletType.Butt, Polyline3D.ClosedFilletType.Miter,
+        //      offset,
+        //      brd.Plane,
+        //      0.01,
+        //      out pout1,
+        //      out pout2);
 
-            return brd;
-        }
+        //    if (pout1.Count > 0)
+        //        brd.Centre = pout1[0];
+        //    else if (pout2.Count > 0)
+        //        brd.Centre = pout2[0];
+        //    else
+        //        brd.Centre = res[index];
 
-        public T[] Sample<T>(Rhino.Geometry.Mesh mesh, string key, int sample_type = 0)
-        {
-            if (!Grids.ContainsKey(key))
-            {
-                return null;
-            }
+        //    brd.Centre.ReduceSegments(3);
+        //    brd.LogId = Id;
 
-            var grid = Grids[key];
+        //    Boards.Add(brd);
 
-            if (grid.GetType().GetGenericArguments()[0] != typeof(T))
-                return null;
+        //    return brd;
+        //}
 
-            var tgrid = grid as GridBase<T>;
+        //public T[] Sample<T>(Rhino.Geometry.Mesh mesh, string key, int sample_type = 0)
+        //{
+        //    if (!Grids.ContainsKey(key))
+        //    {
+        //        return null;
+        //    }
 
-            var coords = mesh.Vertices.ToFloatArray();
+        //    var grid = Grids[key];
 
-            return tgrid.GetValuesWorld(Array.ConvertAll(coords, x => (double)x));
-            //return this.Grids[key].GetValuesWorld(Array.ConvertAll(coords, x => (double)x));
-        }
+        //    if (grid.GetType().GetGenericArguments()[0] != typeof(T))
+        //        return null;
+
+        //    var tgrid = grid as GridBase<T>;
+
+        //    var coords = mesh.Vertices.ToFloatArray();
+
+        //    return tgrid.GetValuesWorld(Array.ConvertAll(coords, x => (double)x));
+        //    //return this.Grids[key].GetValuesWorld(Array.ConvertAll(coords, x => (double)x));
+        //}
 
         public void ConstructRTree()
         {
@@ -431,33 +431,34 @@ namespace RawLamb
             
             if (knotModel is FlowlineKnotFibreOrientationModel)
                 (knotModel as FlowlineKnotFibreOrientationModel).Initialize(min_radius * 0.8, max_radius * 1.2, (max_radius - min_radius) / 100);
+            else if (knotModel is FlowlineKnotFibreOrientationModel_alpha)
+                (knotModel as FlowlineKnotFibreOrientationModel_alpha).Initialize(min_radius * 0.8, max_radius * 1.2, (max_radius - min_radius) / 100);
 
             for (int i = 0; i < samplePoints.Count; ++i)
-            {
-                switch(sampleStatus[i])
                 {
-                    case (-1):
-                        orientations[i] = logModel.GetMaterialDirection(samplePoints[i]);
-                        break;
-                    case (0):
-                        orientations[i] = logModel.GetMaterialDirection(samplePoints[i]);
-                        break;
-                    default:
-                        var knot = (Knot)Knots.Where(x => x.Index == sampleStatus[i]).First();
-                        if (knot.Contains(samplePoints[i]) >= 0)
-                        {
-                            orientations[i] = new Plane(samplePoints[i], knot.Axis.Direction, knot.Axis.From - samplePoints[i]);
+                    switch (sampleStatus[i])
+                    {
+                        case (-1):
+                            orientations[i] = logModel.GetMaterialDirection(samplePoints[i]);
                             break;
-                        }
-                        var xaxis = knotModel.CalculateFibreOrientation(samplePoints[i], knot, logModel.Plane.ZAxis);
-                        var yaxis = logModel.Plane.ZAxis;
-                        var oriPlane = new Plane(samplePoints[i], xaxis, yaxis);
-                        if (!oriPlane.IsValid) throw new Exception("Orientation plane not valid!");
-                        orientations[i] = oriPlane;
-                        break;
+                        case (0):
+                            orientations[i] = logModel.GetMaterialDirection(samplePoints[i]);
+                            break;
+                        default:
+                            var knot = (Knot)Knots.Where(x => x.Index == sampleStatus[i]).First();
+                            if (knot.Contains(samplePoints[i]) >= 0)
+                            {
+                                orientations[i] = new Plane(samplePoints[i], knot.Axis.Direction, knot.Axis.From - samplePoints[i]);
+                                break;
+                            }
+                            var xaxis = knotModel.CalculateFibreOrientation(samplePoints[i], knot, logModel.Plane.ZAxis);
+                            var yaxis = logModel.Plane.ZAxis;
+                            var oriPlane = new Plane(samplePoints[i], xaxis, yaxis);
+                            if (!oriPlane.IsValid) throw new Exception("Orientation plane not valid!");
+                            orientations[i] = oriPlane;
+                            break;
+                    }
                 }
-            }
-
         }
 
         public void SampleLog(LogModel logModel, IList<Point3d> samplePoints, out int[]sampleStatus, out int[] knotIndices)

@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using Grasshopper.Kernel.Types.Transforms;
 using Rhino;
 using Rhino.Geometry;
 
-using GluLamb;
+//using GluLamb;
 
 namespace RawLamb
 {
@@ -64,6 +64,10 @@ namespace RawLamb
 
         }
 
+        public static Vector3d Project(Plane plane, Vector3d v) => new Vector3d(v - (plane.ZAxis * Vector3d.Multiply(plane.ZAxis, v)));
+
+        public static double Lerp(double min, double max, double mu) => (max - min) * mu + min;
+
         public void Initialize(double radius_min, double radius_max, double step)
         {
             int N = (int)Math.Ceiling((radius_max - radius_min) / step);
@@ -77,57 +81,189 @@ namespace RawLamb
 
                 ApproximateG(ref GLUT[i][0], ref GLUT[i][1], out GLUT[i][2], out GLUT[i][3], out GLUT[i][4]);
             }
+
+            GLUT.Sort(new ArrayComparer());
         }
 
         /// <summary>
         /// Approximate G for a given Bk and Lk.
         /// </summary>
         /// <returns></returns>
-        public static void ApproximateG(ref double Bk, ref double Lk, out double G, out double a, out double aa)
+        public void ApproximateG(ref double Bk, ref double Lk, out double G, out double a, out double aa)
         {
-            // Do some sort of magic here...
-            double acc01 = 0.01;
-            int acc02 = 8999;
-            List<double> table = new List<double>();
-            a = 0;
+            // Numerical solver parameters - tweak if you need higher precision
+            //const double U = 1.0;                       // freestream speed (used as reference)
+            const double tolA = 1e-6;                   // tolerance on 'a' search
+            const double tolY = 1e-8;                   // tolerance solving psi(0,y)=0
+            const int maxIterA = 60;
+            const int maxIterY = 80;
 
-            for (int i = 49; i < acc02; ++i)
+            // safety bounds for 'a' search (must be > 0)
+            double aMin = 1e-4;
+            double aMax = Math.Max(1.0, Lk) * 10.0; // heuristic upper bound
+
+            // simple helper: compute Q from a and desired Lk using algebraic rearrangement
+            Func<double, double, double> Q_from_a_Lk = (ax, Lk) =>
             {
-                double deg = acc01 * i; // Angle in degrees
-                if (deg <= 0 || deg == 1)
+                double halfL = Lk * 0.5;
+                // must have ax > 0, and ax^2 - halfL^2 >= 0 for real stagnation points
+                double num = ax * ax - halfL * halfL;
+                if (num <= 0.0) return double.NaN;
+                return Math.PI * U * num / ax;
+            };
+
+            // stream function psi(0,y) with source at -a and sink at +a, strength Q
+            Func<double, double, double, double> psi0 = (ax, Q, y) =>
+            {
+                // psi(0,y) = U*y + Q/(2*pi) * ( atan2(y, 0+ a) - atan2(y, 0 - a) )
+                // careful with atan2 order: here we used source at -a, sink at +a
+                double term = (Q / (2.0 * Math.PI)) * (Math.Atan2(y, ax) - Math.Atan2(y, -ax));
+                return U * y + term;
+            };
+
+            // Given 'a', compute predicted Bk (2*yRoot) by solving psi(0,y)=0 for positive y.
+            Func<double, double, double> PredictedBkForA = (ax, Lk) =>
+            {
+                double Q = Q_from_a_Lk(ax, Lk);
+                if (double.IsNaN(Q) || !double.IsFinite(Q))
+                    return double.PositiveInfinity; // mark invalid a
+
+                // Check that stagnation x exists:
+                double xs2 = ax * ax - Q * ax / (Math.PI * U);
+                if (xs2 <= 0.0)
+                    return double.PositiveInfinity; // invalid, no closed oval
+
+                // Solve psi(0,y) = 0 for y>0; use bisection between yLo=0 and yHi large.
+                double yLo = 0.0;
+                double yHi = Math.Max(1.0, ax * 5.0);
+
+                double fLo = psi0(ax, Q, yLo);
+                double fHi = psi0(ax, Q, yHi);
+
+                // If signs don't bracket a root, try increasing yHi a few times
+                int expandAttempts = 0;
+                while (fLo * fHi > 0.0 && expandAttempts < 10)
                 {
-                    table.Add(100.0);
-                    continue;
+                    yHi *= 2.0;
+                    fHi = psi0(ax, Q, yHi);
+                    expandAttempts++;
+                }
+                if (fLo * fHi > 0.0)
+                    return double.PositiveInfinity; // can't find root => invalid
+
+                double yMid = 0.0;
+                for (int iter = 0; iter < maxIterY; ++iter)
+                {
+                    yMid = 0.5 * (yLo + yHi);
+                    double fMid = psi0(ax, Q, yMid);
+
+                    if (Math.Abs(fMid) < tolY)
+                        break;
+
+                    if (fLo * fMid <= 0.0)
+                    {
+                        yHi = yMid;
+                        fHi = fMid;
+                    }
+                    else
+                    {
+                        yLo = yMid;
+                        fLo = fMid;
+                    }
                 }
 
-                double degR = deg * Math.PI / 180; // Angle in radians
-                degR = RhinoMath.ToRadians(deg);
-                Lk = Math.Atan(degR);
+                return 2.0 * yMid; // full short axis (Bk)
+            };
 
-                a = Bk / degR;
-                double R = -(a * Bk) / (Bk * Bk - a * a);
-                table.Add(Math.Abs(Lk - R));
+            // preliminary plausibility checks
+            if (Bk <= 0.0 || Lk <= 0.0)
+            {
+                G = double.NaN; a = double.NaN; aa = double.NaN;
+                return;
             }
 
-            double minT = table.Min();
-            double minI = table.IndexOf(minT);
-            double minD = 0.1 * (minI + 50);
-            aa = Bk / minD;
-            //aa = Br;
+            // Use bisection on 'a' to match predicted Bk to requested Bk.
+            // We assume PredictedBkForA(a) is (roughly) continuous and that we can find a bracket [aMin,aMax].
+            double left = aMin, right = aMax;
+            double fLeft = PredictedBkForA(left, Lk) - Bk;
+            double fRight = PredictedBkForA(right, Lk) - Bk;
 
-            // U: the velocity of the rectilinear flow
-            // q: the flow rate in m2/s from the source and sink
-            // a: distance of the source and sink to the origin of the coordinate system
-            // G: ratio of q to U (q/U)
-            // bk: short dimension of oval
-            // lk: long dimension of oval
-            // bk/2 + G/pi * arctan(bk/2a) - g/2 = 0
+            // If both sides are Infinity/invalid, expand right
+            int expand = 0;
+            while ((double.IsInfinity(fLeft) || double.IsInfinity(fRight) || Math.Sign(fLeft) == Math.Sign(fRight)) && expand < 40)
+            {
+                // try expand search region
+                right *= 1.5;
+                left = Math.Max(aMin, left * 0.9);
+                fLeft = PredictedBkForA(left, Lk) - Bk;
+                fRight = PredictedBkForA(right, Lk) - Bk;
+                expand++;
+            }
 
+            if (double.IsInfinity(fLeft) || double.IsInfinity(fRight) || Math.Sign(fLeft) == Math.Sign(fRight))
+            {
+                // failsafe: couldn't bracket a root — fall back to best-effort grid search
+                double bestA = double.NaN;
+                double bestErr = double.PositiveInfinity;
+                for (double ax = aMin; ax <= aMax; ax += (aMax - aMin) / 200.0)
+                {
+                    double pred = PredictedBkForA(ax, Lk);
+                    if (double.IsInfinity(pred)) continue;
+                    double err = Math.Abs(pred - Bk);
+                    if (err < bestErr)
+                    {
+                        bestErr = err;
+                        bestA = ax;
+                    }
+                }
+                if (double.IsNaN(bestA))
+                {
+                    // cannot find anything reasonable
+                    G = double.NaN; a = double.NaN; aa = double.NaN;
+                    return;
+                }
+                // accept the bestA
+                a = bestA;
+                double Qbest = Q_from_a_Lk(a, Lk);
+                G = Qbest / U;
+                aa = a;
+                return;
+            }
 
-            //bk / 2 + G / Math.PI * Math.Atan2(bk / (2 * a) - G / 2 = 0;
+            // standard bisection to refine 'a'
+            double aMid = 0.0;
+            for (int iter = 0; iter < maxIterA; ++iter)
+            {
+                aMid = 0.5 * (left + right);
+                double fMid = PredictedBkForA(aMid, Lk) - Bk;
 
-            G = Math.Abs(Math.PI * (Bk * Bk - aa * aa) / aa);
+                if (Math.Abs(fMid) < tolA)
+                    break;
+
+                if (Math.Sign(fMid) == Math.Sign(fLeft))
+                {
+                    left = aMid;
+                    fLeft = fMid;
+                }
+                else
+                {
+                    right = aMid;
+                    fRight = fMid;
+                }
+            }
+
+            a = aMid;
+            double Qfinal = Q_from_a_Lk(a, Lk);
+            G = Qfinal / U;
+            aa = a;
+
+            // Final plausibility clamp
+            if (!double.IsFinite(G) || !double.IsFinite(a))
+            {
+                G = double.NaN; a = double.NaN; aa = double.NaN;
+            }
         }
+
 
         public void GetVelocity(double strength, double xs, double ys, double x, double y, out double u, out double v)
         {
@@ -150,7 +286,7 @@ namespace RawLamb
             var knot_plane = new Plane(cp, knot.Axis.Direction);
             var projected = stem_axis - knot_plane.ZAxis * (knot_plane.ZAxis * stem_axis);
 
-            projected = knot_plane.Project(stem_axis);
+            projected = Project(knot_plane, stem_axis);
             projected.Unitize();
 
             var yaxis = Vector3d.CrossProduct(knot_plane.ZAxis, projected);
@@ -162,10 +298,9 @@ namespace RawLamb
 
 
             // Freestream speed
-            double u_inf = 1.0;
             stem_axis.Unitize();
-            double ux = stem_axis.X;
-            double uy = stem_axis.Y;
+            double ux = stem_axis.X * U;
+            double uy = stem_axis.Y * U;
 
             // beta pattern for late wood
             double aboveA = 1, aboveB = 0.0;
@@ -203,10 +338,10 @@ namespace RawLamb
                     var before = GLUT[index - 1];
                     var after = GLUT[index];
 
-                    var mu = (Bk - before[0]) / (before[0] - after[0]);
+                    var mu = (Bk - before[0]) / (after[0] - before[0]);
                     for (int i = 1; i < parameters.Length; i++)
                     {
-                        parameters[i] = GluLamb.Interpolation.Lerp(before[i], after[i], mu);
+                        parameters[i] = Lerp(before[i], after[i], mu);
                     }
                 }
             }
