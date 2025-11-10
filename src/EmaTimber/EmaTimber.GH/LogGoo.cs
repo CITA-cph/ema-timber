@@ -1,4 +1,6 @@
-﻿/*
+﻿#if OBSOLETE
+
+/*
  * RawLamb
  * Copyright 2022 Tom Svilans
  * 
@@ -143,3 +145,4 @@ namespace EmaTimber.GH
         
     }
 }
+#endif

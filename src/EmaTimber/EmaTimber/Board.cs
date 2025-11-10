@@ -13,7 +13,7 @@ namespace RawLamb
         public Guid BoardId;
         public Guid LogId;
 
-        public Log Log = null;
+        //public Log Log = null;
 
         public string Name;
         public List<Polyline> Top;
@@ -26,7 +26,7 @@ namespace RawLamb
         public double Thickness;
 
         public Mesh Mesh;
-        public DeepSight.FloatGrid Grid;
+        //public DeepSight.FloatGrid Grid;
 
         private BoundingBox m_boundingbox = BoundingBox.Unset;
         public BoundingBox BoundingBox
@@ -42,9 +42,9 @@ namespace RawLamb
             }
         }
 
-        public Board(string name = "Board") : this(null, name)
-        {
-        }
+        //public Board(string name = "Board") : this(null, name)
+        //{
+        //}
 
         public static void ExportSTEP(Plane board_plane, double l, double w, double t, List<Knot> knots, string output_path)
         {
@@ -86,12 +86,12 @@ namespace RawLamb
                 knot_data[ii + 10] = (float)knots[i].Axis.Length;
             }
 
-            DeepSight.RLGeom.ExportBoard2Step(board_plane_flat, board_dims, knots.Count, knot_data, output_path);
+            //DeepSight.RLGeom.ExportBoard2Step(board_plane_flat, board_dims, knots.Count, knot_data, output_path);
         }
 
-        public Board(Log log, string name = "Board", double thickness = 24.0)
+        public Board(/*Log log, */string name = "Board", double thickness = 24.0)
         {
-            Log = log;
+            //Log = log;
             //LogId = log.LogId;
             Thickness = thickness;
             Name = name;
@@ -129,15 +129,15 @@ namespace RawLamb
                 Centre = Centre.Duplicate(),
                 Plane = Plane,
                 Thickness = Thickness,
-                Log = Log
+                //Log = Log
 
             };
 
             if (this.Mesh != null)
                 board.Mesh = this.Mesh;
 
-            if (this.Grid != null)
-                board.Grid = this.Grid.DuplicateGrid();
+            //if (this.Grid != null)
+            //    board.Grid = this.Grid.DuplicateGrid();
 
             for (int i = 0; i < Top.Count; ++i)
             {

@@ -1,3 +1,16 @@
+[project]
+name = "ema-timber"
+version = "0.1.0"
+description = "EMA Timber Python tools"
+authors = [{ name = "Tom Svilans" }]
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+	"gmsh",
+	"pydantic",
+	"networkx",
+]
+
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
