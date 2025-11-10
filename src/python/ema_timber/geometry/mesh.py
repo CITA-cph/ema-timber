@@ -12,6 +12,10 @@ except:
     from classes import Board, Log
     from util import *
 
+
+
+
+
 class BoardGenerator():
     def __init__(self, board, log, element_order = 2):
         self.board = board

@@ -7,6 +7,13 @@ instructions = ["Top left", "Top right", "Bottom right", "Bottom left"]
 mouseX = 0
 mouseY = 0
 
+
+def img_to_view(coord, shape):
+    return (coord[0] / shape[0], coord[1] / shape[1])
+
+def view_to_img(coord, shape):
+    return (coord[0] * shape[0], coord[1] * shape[1])
+
 def optimize_corner(img, c, ws=50):
     '''
     img : original image
@@ -61,11 +68,13 @@ def get_perspective_correction(img_path, edge_length = 20, num_squares = 5, pixe
 
     # Create calibration points
     numSquares = 5
-    quadPoints = np.float32([
+    quad_points = np.float32([
         [0,0],  
         [num_squares * edge_length, 0], 
         [num_squares * edge_length, num_squares * edge_length], 
         [0,num_squares * edge_length]])
+    quad_points = np.float32([[0,0],[1,0],[1,1],[0,1]])
+
 
 
     cv2.namedWindow('image')
@@ -131,7 +140,23 @@ def get_perspective_correction(img_path, edge_length = 20, num_squares = 5, pixe
     cv2.imshow('image', dispImg)
     cv2.waitKey(0)
 
-    perspMat = cv2.getPerspectiveTransform(corners, quadPoints)
+    # Convert image coordinates into view coordinates to get a scale-independent perspective matrix
+    corners = np.float32([img_to_view(x, img.shape) for x in corners])
+    #quad_points = np.float32([img_to_view(x, (1,1)) for x in quad_points])
+
+    print(f"View corners     : {corners}")
+    print(f"View quad points : {quad_points}")
+
+    perspMat = cv2.getPerspectiveTransform(corners, quad_points)
+
+    perspMat = np.float32([[scale, 0, 0], [0, scale, 0], [0,0,1]]) @ perspMat
+
+    corrected = cv2.warpPerspective(img, perspMat, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
+
+    cv2.imshow('corrected', corrected)
+    cv2.waitKey(0)
+
+    return
 
     coords = [
         [0,0], 
@@ -139,6 +164,7 @@ def get_perspective_correction(img_path, edge_length = 20, num_squares = 5, pixe
         [img.shape[1], img.shape[0]], 
         [0, img.shape[0]]
         ]
+
     print("\nImage corners:")
     print(coords)
 
@@ -216,8 +242,7 @@ def get_perspective_correction(img_path, edge_length = 20, num_squares = 5, pixe
 
     np.savetxt("./camera.calib", perspMat)
 
-def apply_correction(calib_path, img_path):
-    global w, h
+def apply_correction(img, calib_path):
 
     img = cv2.imread(img_path)
     scale = 960 / img.shape[0]
@@ -239,6 +264,7 @@ if __name__=="__main__":
     img_path = r"C:\Users\tsvi\Det Kongelige Akademi\ERC_TIMBER_TRACK - General\02_PROJECTS\23_11 - LinearScanner\Software\231213_build_0.0\240123ext_calib\calib_img\B_002.png"
     get_perspective_correction(img_path, edge_length=22.2333, num_squares=6, pixels_per_mm=2)
 
+    exit()
 
     import os
     img_dir = r"C:\Users\tsvi\Det Kongelige Akademi\ERC_TIMBER_TRACK - General\02_PROJECTS\23_11 - LinearScanner\Software\231213_build_0.0\240123ext_calib\example"
