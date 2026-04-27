@@ -22,7 +22,6 @@ using System.Collections.Generic;
 
 using Rhino.Geometry;
 using Grasshopper.Kernel;
-using DeepSightCommon;
 
 namespace EmaTimber.GH.Components
 {

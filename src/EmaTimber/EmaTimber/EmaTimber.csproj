@@ -26,6 +26,14 @@
   <PropertyGroup>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Grasshopper" Version="8.10.24226.13001" />
